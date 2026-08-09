@@ -14,11 +14,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: "فرصة العمر - منصة السحوبات الفاخرة",
     description: "انضم إلى آلاف المشتركين واربح جوائز قيمة. السحب العشوائي ينتظرك!",
-    url: "https://forsa-app.com", // ⚠️ غيّر الرابط بعد شراء النطاق
+    url: "https://forsa-app-ten.vercel.app", // ⚠️ غيّر الرابط بعد شراء النطاق
     siteName: "فرصة العمر",
     images: [
       {
-        url: "https://forsa-app.com/og-image.png", // ⚠️ غيّر الرابط بعد شراء النطاق
+        url: "https://forsa-app-ten.vercel.app/og-image.png", // ⚠️ غيّر الرابط بعد شراء النطاق
         width: 1200,
         height: 630,
         alt: "فرصة العمر - منصة السحوبات الفاخرة",
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "فرصة العمر - منصة السحوبات الفاخرة",
     description: "اشترِ بطاقتك واربح جوائز قيمة في سحوبات شفافة وعادلة.",
-    images: ["https://forsa-app.com/og-image.png"],
+    images: ["https://forsa-app-ten.vercel.app/og-image.png"],
   },
   robots: {
     index: true,
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
     },
   },
   alternates: {
-    canonical: "https://forsa-app.com",
+    canonical: "https://forsa-app-ten.vercel.app",
   },
 };
 
@@ -83,7 +83,7 @@ export default async function RootLayout({
               "@context": "https://schema.org",
               "@type": "WebSite",
               name: "فرصة العمر",
-              url: "https://forsa-app.com", // ⚠️ غيّر الرابط بعد شراء النطاق
+              url: "https://forsa-app-ten.vercel.app", // ⚠️ غيّر الرابط بعد شراء النطاق
               description: "منصة السحوبات الفاخرة - اشترِ بطاقتك واربح جوائز قيمة",
               potentialAction: {
                 "@type": "SearchAction",
