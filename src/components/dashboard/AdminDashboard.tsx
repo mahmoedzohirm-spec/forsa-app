@@ -37,7 +37,6 @@ export default function AdminDashboard({
   const [resetConfirm, setResetConfirm] = useState(false);
   const [siteSettings, setSiteSettings] = useState({ site_name: "", currency: "", ticket_price: "", max_tickets: "" });
   
-  // 👇 حالة لتخزين صورة الإيصال المختارة لعرضها في Modal
   const [selectedReceipt, setSelectedReceipt] = useState<string | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -85,7 +84,6 @@ export default function AdminDashboard({
   const pendingTickets = tickets.filter((t) => t.status === "pending");
   const revenue = parseInt(counts.sold || "0") * parseInt(settings.ticket_price || "100");
 
-  // ===== دالة مساعدة لإرسال الإشعارات (داخلي + Push) عبر API =====
   const sendNotification = async (userId: number, title: string, message: string, type: string, data?: any) => {
     try {
       const res = await fetch("/api/notifications/send", {
@@ -245,10 +243,9 @@ export default function AdminDashboard({
     }
   };
 
-  // ===== ✅ دالة ضغط الصورة وتحويلها إلى Base64 (معدلة) =====
+  // ===== ✅ دالة ضغط الصورة وتحويلها إلى Base64 (المعدلة) =====
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
-      // تحقق من حجم الملف (حد أقصى 5 ميجابايت)
       if (file.size > 5 * 1024 * 1024) {
         reject(new Error("حجم الصورة يتجاوز 5 ميجابايت. يرجى استخدام صورة أصغر."));
         return;
@@ -282,7 +279,6 @@ export default function AdminDashboard({
           const ctx = canvas.getContext("2d");
           ctx?.drawImage(img, 0, 0, width, height);
 
-          // تصدير الصورة بجودة 70% (تقليل الحجم)
           const compressed = canvas.toDataURL("image/jpeg", 0.7);
           resolve(compressed);
         };
@@ -293,7 +289,6 @@ export default function AdminDashboard({
     });
   };
 
-  // ===== دوال رفع الصور (معدلة لعرض رسائل الخطأ) =====
   const handleNewPrizeImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -396,7 +391,6 @@ export default function AdminDashboard({
     fontFamily: "Cairo, Inter, sans-serif",
   };
 
-  // ===== دالة لجلب الإيصال عند الطلب =====
   const fetchReceipt = async (ticketNumber: number) => {
     try {
       const res = await fetch(`/api/admin/tickets/receipt?ticketNumber=${ticketNumber}`);
@@ -526,7 +520,6 @@ export default function AdminDashboard({
         </div>
       )}
 
-      {/* Sidebar */}
       <div
         style={{
           width: "240px",
@@ -629,7 +622,6 @@ export default function AdminDashboard({
         </div>
       </div>
 
-      {/* Main Content */}
       <div style={{ flex: 1, padding: "32px", overflowY: "auto" }}>
         {activeTab === "stats" && (
           <div>
@@ -800,13 +792,11 @@ export default function AdminDashboard({
                             <span style={{ color: "#c4b5fd" }}>{t.notes}</span>
                           </div>
                         )}
-                        {/* ===== القسم المعدل لعرض الإيصال مع زر PDF ===== */}
                         <div style={{ gridColumn: "span 2", marginTop: "8px" }}>
                           <span style={{ color: "#9ca3af", fontSize: "13px", display: "block", marginBottom: "6px" }}>
                             🧾 إيصال التحويل:
                           </span>
                           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                            {/* زر عرض الإيصال */}
                             <button
                               onClick={() => fetchReceipt(t.number)}
                               style={{
@@ -831,7 +821,6 @@ export default function AdminDashboard({
                               🔍 عرض الإيصال
                             </button>
 
-                            {/* ✅ زر تحميل PDF - جديد */}
                             <button
                               onClick={async () => {
                                 try {
