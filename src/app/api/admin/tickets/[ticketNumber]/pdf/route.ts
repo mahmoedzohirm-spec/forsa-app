@@ -1,0 +1,186 @@
+import { NextRequest, NextResponse } from "next/server";
+import { pool } from "@/db";
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ ticketNumber: string }> }
+) {
+  try {
+    const { ticketNumber } = await params;
+
+    if (!ticketNumber) {
+      return NextResponse.json(
+        { success: false, error: "رقم البطاقة مطلوب" },
+        { status: 400 }
+      );
+    }
+
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        `SELECT 
+          number, status, user_name, user_phone, contact_phone, 
+          payment_method, receipt_image, notes, updated_at
+         FROM tickets 
+         WHERE number = $1`,
+        [parseInt(ticketNumber)]
+      );
+
+      if (result.rows.length === 0) {
+        return NextResponse.json(
+          { success: false, error: "البطاقة غير موجودة" },
+          { status: 404 }
+        );
+      }
+
+      const ticket = result.rows[0];
+
+      // ===== إنشاء ملف PDF =====
+      const pdfDoc = await PDFDocument.create();
+      const page = pdfDoc.addPage([600, 800]);
+      const { width, height } = page.getSize();
+
+      // ===== إضافة النصوص (بدون رموز تعبيرية) =====
+      const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+      // عنوان رئيسي
+      page.drawText("Receipt - Ticket Booking", {
+        x: 50,
+        y: height - 50,
+        size: 24,
+        font: fontBold,
+        color: rgb(0.96, 0.62, 0.04),
+      });
+
+      // خط فاصل
+      page.drawLine({
+        start: { x: 50, y: height - 70 },
+        end: { x: width - 50, y: height - 70 },
+        thickness: 2,
+        color: rgb(0.96, 0.62, 0.04),
+      });
+
+      // ===== بيانات البطاقة =====
+      let yPos = height - 100;
+      const fontSize = 14;
+
+      let statusText = "Available";
+      if (ticket.status === "pending") statusText = "Pending Review";
+      else if (ticket.status === "sold") statusText = "Sold";
+
+      const fields = [
+        { label: "Ticket Number:", value: `#${ticket.number}` },
+        { label: "Status:", value: statusText },
+        { label: "User Name:", value: ticket.user_name || "Not specified" },
+        { label: "Transfer Phone:", value: ticket.user_phone || "Not specified" },
+        { label: "Contact Phone:", value: ticket.contact_phone || "Not specified" },
+        { label: "Payment Method:", value: ticket.payment_method || "Not specified" },
+        { label: "Date:", value: new Date(ticket.updated_at).toLocaleString("en-US") },
+      ];
+
+      for (const field of fields) {
+        page.drawText(`${field.label} ${field.value}`, {
+          x: 50,
+          y: yPos,
+          size: fontSize,
+          font,
+          color: rgb(0.2, 0.2, 0.2),
+        });
+        yPos -= 30;
+      }
+
+      // ===== إضافة صورة الإيصال =====
+      if (ticket.receipt_image) {
+        try {
+          const base64Data = ticket.receipt_image.split(",")[1] || ticket.receipt_image;
+          const imageBuffer = Buffer.from(base64Data, "base64");
+          const image = await pdfDoc.embedPng(imageBuffer);
+          const imageWidth = 400;
+          const imageHeight = (image.width / imageWidth) * image.height;
+
+          yPos -= 30;
+          page.drawImage(image, {
+            x: (width - imageWidth) / 2,
+            y: yPos - imageHeight,
+            width: imageWidth,
+            height: imageHeight,
+          });
+
+          yPos -= imageHeight + 30;
+        } catch (imageError) {
+          console.error("Error embedding image:", imageError);
+          page.drawText("Image not available", {
+            x: 50,
+            y: yPos - 30,
+            size: 14,
+            font,
+            color: rgb(1, 0, 0),
+          });
+          yPos -= 60;
+        }
+      } else {
+        page.drawText("No receipt image attached", {
+          x: 50,
+          y: yPos - 30,
+          size: 14,
+          font,
+          color: rgb(0.8, 0.8, 0.8),
+        });
+        yPos -= 60;
+      }
+
+      // ===== ملاحظات =====
+      if (ticket.notes) {
+        page.drawText(`Notes: ${ticket.notes}`, {
+          x: 50,
+          y: yPos - 20,
+          size: 12,
+          font,
+          color: rgb(0.4, 0.4, 0.4),
+        });
+      }
+
+      // ===== تذييل الصفحة =====
+      page.drawText(`Generated on: ${new Date().toLocaleString("en-US")}`, {
+        x: 50,
+        y: 30,
+        size: 10,
+        font,
+        color: rgb(0.6, 0.6, 0.6),
+      });
+
+      page.drawText("© Lifetime Chance - All rights reserved", {
+        x: 50,
+        y: 15,
+        size: 10,
+        font,
+        color: rgb(0.6, 0.6, 0.6),
+      });
+
+      // ===== حفظ PDF =====
+      const pdfBytes = await pdfDoc.save();
+
+      // ✅ تحويل Uint8Array إلى Buffer (للتوافق مع NextResponse)
+      const pdfBuffer = Buffer.from(pdfBytes);
+
+      // ✅ إرجاع الملف باستخدام Buffer
+      return new NextResponse(pdfBuffer, {
+        status: 200,
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `attachment; filename=receipt-${ticket.number}.pdf`,
+        },
+      });
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    console.error("PDF generation error:", error);
+    return NextResponse.json(
+      { success: false, error: String(error) },
+      { status: 500 }
+    );
+  }
+}

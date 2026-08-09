@@ -1,0 +1,159 @@
+{
+  "HomePage": {
+    "hero": {
+      "title": "Lifetime Chance",
+      "subtitle": "Buy your numbered ticket and wait for the random draw to win valuable prizes!",
+      "price": "Ticket price only {price} {currency}",
+      "currency": "₪",
+      "button_buy": "🎯 Choose your lucky ticket",
+      "button_signup": "🎟️ Sign up and buy your ticket",
+      "button_prizes": "🏆 Discover the prizes"
+    },
+    "stats": {
+      "total": "Total Tickets",
+      "available": "Available Tickets",
+      "sold": "Tickets Sold",
+      "subscribers": "Subscribers"
+    },
+    "how": {
+      "title": "How does the platform work?",
+      "subtitle": "Three simple steps to participate and win",
+      "currency": "₪",
+      "steps": [
+        {
+          "title": "Sign up and choose your ticket",
+          "desc": "Create your free account and choose your lucky number from available tickets"
+        },
+        {
+          "title": "Pay and send the receipt",
+          "desc": "Transfer the ticket amount ({price} {currency}) via one of the available payment methods and upload the receipt image"
+        },
+        {
+          "title": "Wait for the draw and win!",
+          "desc": "After your request is approved, wait for the random draw on the spinning wheel to become the lucky winner"
+        }
+      ]
+    },
+    "prizes": {
+      "title": "🏆 Amazing prizes await you",
+      "subtitle": "One win can change your life",
+      "no_prizes": "No prizes available currently",
+      "ranks": {
+        "first": "First Place",
+        "second": "Second Place",
+        "third": "Third Place"
+      }
+    },
+    "tickets": {
+      "title": "🎟️ Available Tickets",
+      "subtitle": "Choose your lucky number from {total} tickets",
+      "my_tickets_count": "🎯 You have {count} reserved tickets",
+      "filters": {
+        "all": "All",
+        "available": "Available",
+        "pending": "Pending",
+        "sold": "Sold",
+        "my_tickets": "🎯 My Tickets"
+      },
+      "search_placeholder": "Search by ticket number...",
+      "load_more": "Load more ({remaining} remaining)",
+      "no_my_tickets": "You haven't booked any tickets yet. Choose your ticket now!",
+      "no_results": "No results found"
+    },
+    "footer": {
+      "copyright": "Premium Raffle Platform - All rights reserved © {year}",
+      "support_email": "For support: support@forsaalalumr.com"
+    },
+    "nav": {
+      "home": "Home",
+      "tickets": "Tickets",
+      "prizes": "Prizes",
+      "how": "Draws",
+      "welcome": "👤 {name}",
+      "admin": "🛡️ Dashboard",
+      "logout": "Logout",
+      "login": "Login"
+    },
+    "how_section": {
+      "title": "🎡 Draw Mechanism",
+      "subtitle": "Random, transparent and fair for everyone",
+      "cta": "Ready to participate?",
+      "cta_sub": "Join thousands of subscribers and get your chance to win amazing prizes",
+      "cta_button": "🎟️ Start now - only {price} {currency}"
+    }
+  },
+  "AuthModal": {
+    "login_title": "Login",
+    "register_title": "Create New Account",
+    "login_tab": "Login",
+    "register_tab": "Register",
+    "google_button": "Continue with Google",
+    "or": "Or",
+    "email_placeholder": "Email",
+    "password_placeholder": "Password",
+    "name_placeholder": "Full Name *",
+    "phone_placeholder": "Phone (optional)",
+    "login_button": "Login",
+    "register_button": "Create Account",
+    "forgot_password": "Forgot Password?",
+    "logging_in": "Logging in...",
+    "registering": "Creating account...",
+    "errors": {
+      "fill_fields": "Please fill in all required fields",
+      "login_failed": "Login failed",
+      "register_failed": "Registration failed",
+      "server_error": "Server connection error"
+    }
+  },
+  "BookingModal": {
+    "title": "Book Ticket #",
+    "select_method": "-- Select payment method --",
+    "uploaded": "✅ Receipt uploaded",
+    "upload_prompt": "Click to upload receipt image",
+    "upload_hint": "PNG, JPG, PDF - Max size 5MB",
+    "booking": "Booking...",
+    "book_button": "Book Ticket - {price} {currency}",
+    "fields": {
+      "name": "👤 Full Name *",
+      "transfer_phone": "📱 Transfer Phone *",
+      "contact_phone": "📞✨ Contact Phone if you win *",
+      "payment_method": "💳 Payment Method *",
+      "receipt": "🧾 Transfer Receipt Image *",
+      "notes": "📝 Notes (optional)"
+    },
+    "placeholders": {
+      "name": "Enter your full name",
+      "transfer_phone": "Phone number used for transfer",
+      "contact_phone": "Phone to contact you if you win",
+      "notes": "Any additional notes..."
+    },
+    "details": {
+      "title": "📋 Payment details via {name}",
+      "iban": "IBAN:",
+      "bank": "Bank:",
+      "account_holder": "Account Holder:"
+    },
+    "errors": {
+      "load_methods": "Failed to load payment methods",
+      "file_too_large": "File size exceeds 5MB",
+      "fill_all_fields": "Please fill all required fields and upload receipt image",
+      "booking_failed": "Error booking ticket",
+      "server_error": "Server connection error"
+    }
+  },
+  "AdminDashboard": {
+    "tabs": {
+      "stats": "Statistics",
+      "orders": "Orders",
+      "members": "Members",
+      "draw": "Draw",
+      "prizes": "Prizes",
+      "payment_methods": "Payment Methods",
+      "draw_schedule": "Draw Schedule",
+      "settings": "Settings"
+    },
+    "stats": {
+      "title": "📊 Statistics Overview"
+    }
+  }
+}

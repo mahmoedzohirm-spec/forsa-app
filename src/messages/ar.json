@@ -1,0 +1,159 @@
+{
+  "HomePage": {
+    "hero": {
+      "title": "فرصة العمر",
+      "subtitle": "اشترِ بطاقتك المرقمة وانتظر السحب العشوائي لتفوز بجوائز قيّمة!",
+      "price": "سعر البطاقة {price} {currency} فقط",
+      "currency": "شيكل",
+      "button_buy": "🎯 اختر بطاقتك المحظوظة",
+      "button_signup": "🎟️ سجّل واشترِ بطاقتك",
+      "button_prizes": "🏆 تعرف على الجوائز"
+    },
+    "stats": {
+      "total": "إجمالي البطاقات",
+      "available": "بطاقات متاحة",
+      "sold": "بطاقات مباعة",
+      "subscribers": "المشتركون"
+    },
+    "how": {
+      "title": "كيف تعمل المنصة؟",
+      "subtitle": "ثلاث خطوات بسيطة للمشاركة والفوز",
+      "currency": "شيكل",
+      "steps": [
+        {
+          "title": "سجل واختر بطاقتك",
+          "desc": "أنشئ حسابك المجاني واختر رقمك المحظوظ من البطاقات المتاحة"
+        },
+        {
+          "title": "ادفع وأرسل الإيصال",
+          "desc": "حوّل مبلغ البطاقة ({price} {currency}) عبر إحدى طرق الدفع المتاحة وارفع صورة الإيصال"
+        },
+        {
+          "title": "انتظر السحب وافز!",
+          "desc": "بعد قبول طلبك، انتظر السحب العشوائي بالعجلة الدوارة لتكون الفائز المحظوظ"
+        }
+      ]
+    },
+    "prizes": {
+      "title": "🏆 جوائز مذهلة بانتظارك",
+      "subtitle": "فوز واحد يغيّر حياتك",
+      "no_prizes": "لا توجد جوائز حالياً",
+      "ranks": {
+        "first": "المركز الأول",
+        "second": "المركز الثاني",
+        "third": "المركز الثالث"
+      }
+    },
+    "tickets": {
+      "title": "🎟️ البطاقات المتاحة",
+      "subtitle": "اختر رقمك المحظوظ من {total} بطاقة",
+      "my_tickets_count": "🎯 لديك {count} بطاقة محجوزة",
+      "filters": {
+        "all": "الكل",
+        "available": "متاح",
+        "pending": "قيد المراجعة",
+        "sold": "مباع",
+        "my_tickets": "🎯 بطاقاتي"
+      },
+      "search_placeholder": "ابحث برقم البطاقة...",
+      "load_more": "تحميل المزيد ({remaining} متبقية)",
+      "no_my_tickets": "لم تقم بحجز أي بطاقة بعد. اختر بطاقتك الآن!",
+      "no_results": "لم يتم العثور على نتائج"
+    },
+    "footer": {
+      "copyright": "منصة السحوبات الفاخرة - جميع الحقوق محفوظة © {year}",
+      "support_email": "للتواصل والدعم الفني: support@forsaalalumr.com"
+    },
+    "nav": {
+      "home": "الرئيسية",
+      "tickets": "البطاقات",
+      "prizes": "الجوائز",
+      "how": "السحوبات",
+      "welcome": "👤 {name}",
+      "admin": "🛡️ لوحة التحكم",
+      "logout": "خروج",
+      "login": "تسجيل الدخول"
+    },
+    "how_section": {
+      "title": "🎡 آلية السحوبات",
+      "subtitle": "سحب عشوائي شفاف وعادل للجميع",
+      "cta": "هل أنت مستعد للمشاركة؟",
+      "cta_sub": "انضم إلى آلاف المشتركين واحصل على فرصتك للفوز بجوائز مذهلة",
+      "cta_button": "🎟️ ابدأ الآن - {price} {currency} فقط"
+    }
+  },
+  "AuthModal": {
+    "login_title": "تسجيل الدخول",
+    "register_title": "إنشاء حساب جديد",
+    "login_tab": "دخول",
+    "register_tab": "تسجيل",
+    "google_button": "متابعة باستخدام جوجل",
+    "or": "أو",
+    "email_placeholder": "البريد الإلكتروني",
+    "password_placeholder": "كلمة المرور",
+    "name_placeholder": "الاسم الكامل *",
+    "phone_placeholder": "رقم الجوال (اختياري)",
+    "login_button": "تسجيل الدخول",
+    "register_button": "إنشاء الحساب",
+    "forgot_password": "نسيت كلمة المرور؟",
+    "logging_in": "جارٍ الدخول...",
+    "registering": "جارٍ إنشاء الحساب...",
+    "errors": {
+      "fill_fields": "أدخل جميع الحقول المطلوبة",
+      "login_failed": "خطأ في تسجيل الدخول",
+      "register_failed": "خطأ في إنشاء الحساب",
+      "server_error": "خطأ في الاتصال بالخادم"
+    }
+  },
+  "BookingModal": {
+    "title": "حجز بطاقة رقم",
+    "select_method": "-- اختر طريقة الدفع --",
+    "uploaded": "✅ تم رفع الإيصال",
+    "upload_prompt": "انقر لرفع صورة الإيصال",
+    "upload_hint": "PNG, JPG, PDF - حجم أقصى 5MB",
+    "booking": "جارٍ الحجز...",
+    "book_button": "حجز البطاقة - {price} {currency}",
+    "fields": {
+      "name": "👤 الاسم الكامل *",
+      "transfer_phone": "📱 رقم جوال التحويل *",
+      "contact_phone": "📞✨ رقم التواصل في حال فوزك *",
+      "payment_method": "💳 طريقة الدفع *",
+      "receipt": "🧾 صورة إيصال التحويل *",
+      "notes": "📝 ملاحظات (اختياري)"
+    },
+    "placeholders": {
+      "name": "أدخل اسمك الكامل",
+      "transfer_phone": "رقم الجوال الذي تم التحويل منه",
+      "contact_phone": "رقم للتواصل معك عند الفوز",
+      "notes": "أي ملاحظات إضافية..."
+    },
+    "details": {
+      "title": "📋 تفاصيل الدفع عبر {name}",
+      "iban": "رقم الآيبان:",
+      "bank": "البنك:",
+      "account_holder": "اسم صاحب الحساب:"
+    },
+    "errors": {
+      "load_methods": "تعذر تحميل طرق الدفع",
+      "file_too_large": "حجم الملف يتجاوز 5 ميجابايت",
+      "fill_all_fields": "يرجى تعبئة جميع الحقول المطلوبة ورفع صورة الإيصال",
+      "booking_failed": "حدث خطأ أثناء حجز البطاقة",
+      "server_error": "خطأ في الاتصال بالخادم"
+    }
+  },
+  "AdminDashboard": {
+    "tabs": {
+      "stats": "الإحصائيات",
+      "orders": "الطلبات",
+      "members": "الأعضاء",
+      "draw": "السحب",
+      "prizes": "الجوائز",
+      "payment_methods": "طرق الدفع",
+      "draw_schedule": "موعد السحب",
+      "settings": "الإعدادات"
+    },
+    "stats": {
+      "title": "📊 نظرة عامة على الإحصائيات"
+    }
+  }
+}
