@@ -36,9 +36,14 @@ export default function AdminDashboard({
   const [showNewPrize, setShowNewPrize] = useState(false);
   const [resetConfirm, setResetConfirm] = useState(false);
   const [siteSettings, setSiteSettings] = useState({ site_name: "", currency: "", ticket_price: "", max_tickets: "" });
-  
+
+  // ===== إعلانات (Announcements) =====
+  const [announceTitle, setAnnounceTitle] = useState("");
+  const [announceMessage, setAnnounceMessage] = useState("");
+  const [sending, setSending] = useState(false);
+
   const [selectedReceipt, setSelectedReceipt] = useState<string | null>(null);
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -362,6 +367,38 @@ export default function AdminDashboard({
     }
   };
 
+  // ===== ✅ إرسال إعلان جماعي =====
+  const sendAnnouncement = async () => {
+    if (!announceTitle || !announceMessage) {
+      showToast("⚠️ يرجى كتابة العنوان والرسالة");
+      return;
+    }
+    setSending(true);
+    try {
+      const res = await fetch("/api/admin/announce", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: announceTitle,
+          message: announceMessage,
+          type: "announcement",
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`✅ تم إرسال الإشعار إلى ${data.usersCount} مستخدم`);
+        setAnnounceTitle("");
+        setAnnounceMessage("");
+      } else {
+        showToast(`⚠️ ${data.error || "فشل الإرسال"}`);
+      }
+    } catch {
+      showToast("⚠️ خطأ في الاتصال");
+    } finally {
+      setSending(false);
+    }
+  };
+
   const sidebarTabs = [
     { id: "stats", icon: "📊", label: "الإحصائيات" },
     { id: "orders", icon: "📋", label: "الطلبات" },
@@ -370,6 +407,7 @@ export default function AdminDashboard({
     { id: "prizes", icon: "🏆", label: "الجوائز" },
     { id: "payment-methods", icon: "💳", label: "طرق الدفع" },
     { id: "draw-schedule", icon: "📅", label: "موعد السحب" },
+    { id: "announce", icon: "📢", label: "إعلانات" },   // ✅ تمت الإضافة
     { id: "settings", icon: "⚙️", label: "الإعدادات" },
   ];
 
@@ -1428,6 +1466,54 @@ export default function AdminDashboard({
 
         {activeTab === "draw-schedule" && (
           <DrawScheduleTab showToast={showToast} />
+        )}
+
+        {activeTab === "announce" && (
+          <div>
+            <h1 style={{ fontSize: "26px", fontWeight: "900", color: "#f59e0b", marginBottom: "28px" }}>
+              📢 إرسال إعلان جماعي
+            </h1>
+            <div style={cardStyle}>
+              <div style={{ marginBottom: "16px" }}>
+                <label style={{ color: "#c4b5fd", fontSize: "13px", fontWeight: "600", display: "block", marginBottom: "6px" }}>
+                  عنوان الإشعار
+                </label>
+                <input
+                  style={inputStyle}
+                  type="text"
+                  placeholder="مثال: موعد السحب القادم"
+                  value={announceTitle}
+                  onChange={(e) => setAnnounceTitle(e.target.value)}
+                />
+              </div>
+              <div style={{ marginBottom: "16px" }}>
+                <label style={{ color: "#c4b5fd", fontSize: "13px", fontWeight: "600", display: "block", marginBottom: "6px" }}>
+                  نص الإشعار
+                </label>
+                <textarea
+                  style={{ ...inputStyle, minHeight: "120px", resize: "vertical" }}
+                  placeholder="أدخل نص الإشعار هنا..."
+                  value={announceMessage}
+                  onChange={(e) => setAnnounceMessage(e.target.value)}
+                />
+              </div>
+              <button
+                onClick={sendAnnouncement}
+                disabled={sending}
+                className="btn-gold"
+                style={{
+                  padding: "12px 32px",
+                  borderRadius: "10px",
+                  fontSize: "15px",
+                  fontFamily: "Cairo, Inter, sans-serif",
+                  opacity: sending ? 0.7 : 1,
+                  cursor: sending ? "not-allowed" : "pointer",
+                }}
+              >
+                {sending ? "جارٍ الإرسال..." : "📨 إرسال إعلان للجميع"}
+              </button>
+            </div>
+          </div>
         )}
 
         {activeTab === "settings" && (
