@@ -10,7 +10,7 @@ export async function GET() {
     try {
       // ✅ جلب كل الأعمدة ما عدا image عشان السرعة
       const result = await client.query(
-        "SELECT id, tier, title, description, is_active FROM prizes ORDER BY tier ASC LIMIT 100"
+        "SELECT id, tier, title, description, image, is_active FROM prizes ORDER BY tier ASC LIMIT 100"
       );
       return NextResponse.json({ success: true, prizes: result.rows });
     } finally {
