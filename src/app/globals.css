@@ -165,3 +165,33 @@ input:focus, select:focus, textarea:focus {
   border-color: #7c3aed !important;
   box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2);
 }
+
+/* ============================================================
+   ✅ إضافة جديدة: القائمة العلوية المتجاوبة (للأجهزة المحمولة)
+   ============================================================ */
+
+/* على الشاشات الصغيرة (موبايل) نخفي الأزرار ونظهر الهامبرغر */
+@media (max-width: 768px) {
+  .desktop-nav-link,
+  .desktop-user-name,
+  .desktop-admin-btn,
+  .desktop-logout-btn {
+    display: none !important;
+  }
+  .mobile-menu-btn {
+    display: block !important;
+  }
+}
+
+/* على الشاشات الكبيرة (لاب توب/ديسكتوب) نخفي الهامبرغر ونظهر الأزرار */
+@media (min-width: 769px) {
+  .desktop-nav-link,
+  .desktop-user-name,
+  .desktop-admin-btn,
+  .desktop-logout-btn {
+    display: inline-block !important;
+  }
+  .mobile-menu-btn {
+    display: none !important;
+  }
+}
