@@ -18,10 +18,8 @@ import { PrizesSection } from "@/components/home/PrizesSection";
 import { TicketsSection } from "@/components/home/TicketsSection";
 import { Footer } from "@/components/home/Footer";
 import { TrophyIcon } from "@/components/ui/Icons";
-// ✅ إضافة Firebase Push Notifications
 import { requestPushPermission, onPushMessage } from "@/lib/firebase";
 
-// تحميل ديناميكي للوحة التحكم
 const AdminDashboard = dynamic(
   () => import("@/components/dashboard/AdminDashboard"),
   { loading: () => <Spinner />, ssr: false }
@@ -38,6 +36,7 @@ export default function HomePage() {
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
   const [activeSection, setActiveSection] = useState("home");
   const [initialized, setInitialized] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const [statusFilter, setStatusFilter] = useState("all");
   const [search, setSearch] = useState("");
@@ -58,7 +57,6 @@ export default function HomePage() {
     showToastRef.current = showToast;
   });
 
-  // دالة لفك تشفير الكوكي بأمان
   const parseCookieValue = (value: string): any => {
     let decoded = value;
     for (let i = 0; i < 5; i++) {
@@ -89,7 +87,6 @@ export default function HomePage() {
     throw new Error("Unable to parse cookie value");
   };
 
-  // ===== قراءة المستخدم من localStorage والكوكي =====
   useEffect(() => {
     const checkUser = () => {
       const saved = localStorage.getItem("forsaUser");
@@ -147,7 +144,6 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, []);
 
-  // ===== تهيئة التطبيق =====
   useEffect(() => {
     if (!hasLoaded.current) {
       hasLoaded.current = true;
@@ -164,10 +160,8 @@ export default function HomePage() {
       };
       bootstrap();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ===== ✅ إضافة Firebase Push Notifications =====
   useEffect(() => {
     if (user) {
       const registerPush = async () => {
@@ -192,11 +186,8 @@ export default function HomePage() {
       registerPush();
     }
 
-    // الاستماع للإشعارات عندما يكون التطبيق مفتوحاً
     onPushMessage((payload) => {
       console.log("📨 Push message received:", payload);
-      // هنا يمكنك عرض إشعار داخل التطبيق (مثل Toast)
-      // showToast(payload.notification?.title || "إشعار جديد");
     });
   }, [user]);
 
@@ -267,51 +258,154 @@ export default function HomePage() {
         />
       )}
 
+      {/* ===== القائمة العلوية المعدلة ===== */}
       <nav style={{ position: "sticky", top: 0, zIndex: 100, background: "rgba(8, 5, 16, 0.95)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(124, 58, 237, 0.2)" }}>
-        <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 24px", height: "70px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 16px", height: "70px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          {/* الشعار */}
           <div style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }} onClick={() => setActiveSection("home")}>
             <span style={{ color: "#f59e0b" }}><TrophyIcon /></span>
             <span style={{ fontSize: "20px", fontWeight: "900", background: "linear-gradient(135deg, #f59e0b, #fbbf24)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
               {settings.site_name || "فرصة العمر"}
             </span>
           </div>
-          <div style={{ display: "flex", gap: "4px" }}>
-            {[
-              { id: "home", label: "الرئيسية" },
-              { id: "tickets", label: "البطاقات" },
-              { id: "prizes", label: "الجوائز" },
-              { id: "how", label: "السحوبات" },
-            ].map((link) => (
-              <button
-                key={link.id}
-                onClick={() => setActiveSection(link.id)}
-                style={{ padding: "8px 16px", borderRadius: "8px", border: "none", cursor: "pointer", fontSize: "14px", fontWeight: "600", fontFamily: "Cairo, Inter, sans-serif", transition: "all 0.2s", background: activeSection === link.id ? "rgba(124,58,237,0.2)" : "transparent", color: activeSection === link.id ? "#f59e0b" : "#9ca3af" }}
-              >
-                {link.label}
-              </button>
-            ))}
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <LanguageSwitcher />
-            {user ? (
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <NotificationBell />
-                <span style={{ color: "#c4b5fd", fontSize: "14px" }}>👤 {user.name}</span>
-                {user.is_admin && (
-                  <button onClick={() => setShowDashboard(true)} className="btn-gold" style={{ padding: "8px 20px", borderRadius: "8px", fontSize: "13px", fontFamily: "Cairo, Inter, sans-serif" }}>
-                    🛡️ لوحة التحكم
-                  </button>
-                )}
-                <button onClick={handleLogout} style={{ padding: "8px 16px", background: "transparent", border: "1px solid rgba(239,68,68,0.4)", borderRadius: "8px", color: "#f87171", cursor: "pointer", fontSize: "13px", fontFamily: "Cairo, Inter, sans-serif" }}>
-                  خروج
+
+          <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+            <div style={{ display: "flex", gap: "4px" }}>
+              {[
+                { id: "home", label: "الرئيسية" },
+                { id: "tickets", label: "البطاقات" },
+                { id: "prizes", label: "الجوائز" },
+                { id: "how", label: "السحوبات" },
+              ].map((link) => (
+                <button
+                  key={link.id}
+                  onClick={() => { setActiveSection(link.id); setIsMobileMenuOpen(false); }}
+                  style={{ padding: "8px 16px", borderRadius: "8px", border: "none", cursor: "pointer", fontSize: "14px", fontWeight: "600", fontFamily: "Cairo, Inter, sans-serif", transition: "all 0.2s", background: activeSection === link.id ? "rgba(124,58,237,0.2)" : "transparent", color: activeSection === link.id ? "#f59e0b" : "#9ca3af" }}
+                  className="desktop-nav-link"
+                >
+                  {link.label}
                 </button>
-              </div>
-            ) : (
-              <button onClick={() => setShowAuth(true)} className="btn-gold" style={{ padding: "10px 24px", borderRadius: "10px", fontSize: "14px", fontFamily: "Cairo, Inter, sans-serif" }}>
-                تسجيل الدخول
+              ))}
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              {user ? (
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <NotificationBell />
+                  <span style={{ color: "#c4b5fd", fontSize: "14px" }} className="desktop-user-name">👤 {user.name}</span>
+                  {user.is_admin && (
+                    <button onClick={() => setShowDashboard(true)} className="btn-gold desktop-admin-btn" style={{ padding: "8px 20px", borderRadius: "8px", fontSize: "13px", fontFamily: "Cairo, Inter, sans-serif" }}>
+                      🛡️ لوحة التحكم
+                    </button>
+                  )}
+                  <button onClick={handleLogout} className="desktop-logout-btn" style={{ padding: "8px 16px", background: "transparent", border: "1px solid rgba(239,68,68,0.4)", borderRadius: "8px", color: "#f87171", cursor: "pointer", fontSize: "13px", fontFamily: "Cairo, Inter, sans-serif" }}>
+                    خروج
+                  </button>
+                </div>
+              ) : (
+                <button onClick={() => setShowAuth(true)} className="btn-gold" style={{ padding: "10px 24px", borderRadius: "10px", fontSize: "14px", fontFamily: "Cairo, Inter, sans-serif" }}>
+                  تسجيل الدخول
+                </button>
+              )}
+
+              {/* زر الهامبرغر (يظهر على الموبايل) */}
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                style={{
+                  display: "none",
+                  background: "none",
+                  border: "none",
+                  color: "#fff",
+                  fontSize: "28px",
+                  cursor: "pointer",
+                  padding: "8px",
+                  lineHeight: 1,
+                }}
+                className="mobile-menu-btn"
+              >
+                {isMobileMenuOpen ? "✕" : "☰"}
               </button>
-            )}
+            </div>
           </div>
+        </div>
+
+        {/* ===== القائمة المنسدلة للموبايل (تظهر عند الضغط على الهامبرغر) ===== */}
+        <div style={{
+          display: isMobileMenuOpen ? "block" : "none",
+          background: "rgba(8, 5, 16, 0.98)",
+          borderTop: "1px solid rgba(124, 58, 237, 0.2)",
+          padding: "16px",
+          maxHeight: "80vh",
+          overflowY: "auto",
+        }}>
+          {[
+            { id: "home", label: "الرئيسية" },
+            { id: "tickets", label: "البطاقات" },
+            { id: "prizes", label: "الجوائز" },
+            { id: "how", label: "السحوبات" },
+          ].map((link) => (
+            <button
+              key={link.id}
+              onClick={() => { setActiveSection(link.id); setIsMobileMenuOpen(false); }}
+              style={{
+                display: "block",
+                width: "100%",
+                padding: "12px 16px",
+                borderRadius: "8px",
+                border: "none",
+                cursor: "pointer",
+                fontSize: "16px",
+                fontWeight: "600",
+                fontFamily: "Cairo, Inter, sans-serif",
+                textAlign: "right",
+                background: activeSection === link.id ? "rgba(124,58,237,0.2)" : "transparent",
+                color: activeSection === link.id ? "#f59e0b" : "#c4b5fd",
+                marginBottom: "4px",
+              }}
+            >
+              {link.label}
+            </button>
+          ))}
+          
+          <hr style={{ border: "1px solid rgba(124,58,237,0.2)", margin: "12px 0" }} />
+          
+          {/* ✅ زر تغيير اللغة داخل القائمة المنسدلة */}
+          <div style={{ padding: "8px 16px" }}>
+            <LanguageSwitcher />
+          </div>
+          
+          <hr style={{ border: "1px solid rgba(124,58,237,0.2)", margin: "12px 0" }} />
+          
+          {user ? (
+            <>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "8px 16px", color: "#c4b5fd" }}>
+                <span>👤 {user.name}</span>
+              </div>
+              {user.is_admin && (
+                <button
+                  onClick={() => { setShowDashboard(true); setIsMobileMenuOpen(false); }}
+                  className="btn-gold"
+                  style={{ width: "100%", padding: "12px", borderRadius: "8px", fontSize: "14px", fontFamily: "Cairo, Inter, sans-serif", marginTop: "8px" }}
+                >
+                  🛡️ لوحة التحكم
+                </button>
+              )}
+              <button
+                onClick={handleLogout}
+                style={{ width: "100%", padding: "12px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: "8px", color: "#f87171", cursor: "pointer", fontSize: "14px", fontFamily: "Cairo, Inter, sans-serif", marginTop: "8px" }}
+              >
+                خروج
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => { setShowAuth(true); setIsMobileMenuOpen(false); }}
+              className="btn-gold"
+              style={{ width: "100%", padding: "12px", borderRadius: "8px", fontSize: "14px", fontFamily: "Cairo, Inter, sans-serif" }}
+            >
+              تسجيل الدخول
+            </button>
+          )}
         </div>
       </nav>
 
