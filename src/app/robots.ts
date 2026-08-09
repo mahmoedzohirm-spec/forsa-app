@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/api/', '/admin/', '/auth/'],
     },
-    sitemap: 'https://forsa-app-lovat.vercel.app/sitemap.xml',
+    sitemap: 'https://forsa-app-ten.vercel.app/sitemap.xml',
   };
 }
