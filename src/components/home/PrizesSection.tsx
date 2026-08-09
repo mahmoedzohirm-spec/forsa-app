@@ -9,6 +9,14 @@ interface PrizesSectionProps {
 export function PrizesSection({ prizes, activeSection }: PrizesSectionProps) {
   const t = useTranslations('HomePage.prizes');
 
+  // ✅ دالة لعرض المركز الصحيح (بدون ترجمة)
+  const getRankText = (tier: number) => {
+    if (tier === 1) return "المركز الأول";
+    if (tier === 2) return "المركز الثاني";
+    if (tier === 3) return "المركز الثالث";
+    return `المركز ${tier}`; // المركز الرابع، الخامس، السادس، ...
+  };
+
   return (
     <section style={{ padding: activeSection === "prizes" ? "60px 24px" : "0 24px 80px" }}>
       <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
@@ -41,7 +49,6 @@ export function PrizesSection({ prizes, activeSection }: PrizesSectionProps) {
             prizes.map((prize) => {
               const emojiMap: Record<number, string> = { 1: "🚗", 2: "✈️", 3: "📱" };
               const iconMap: Record<number, string> = { 1: "🥇", 2: "🥈", 3: "🥉" };
-              const rankMap: Record<number, string> = { 1: "first", 2: "second", 3: "third" };
               const colors: Record<number, string> = {
                 1: "#f59e0b",
                 2: "#d1d5db",
@@ -64,7 +71,6 @@ export function PrizesSection({ prizes, activeSection }: PrizesSectionProps) {
               };
 
               const tier = prize.tier || 1;
-              const rank = rankMap[tier] || `rank_${tier}`;
               const emoji = emojiMap[tier] || "🎁";
               const icon = iconMap[tier] || "🏅";
 
@@ -110,6 +116,8 @@ export function PrizesSection({ prizes, activeSection }: PrizesSectionProps) {
                     <div style={{ fontSize: "64px", marginBottom: "8px" }}>{emoji}</div>
                   )}
                   <div style={{ fontSize: "32px", marginBottom: "12px" }}>{icon}</div>
+                  
+                  {/* ✅ عرض المركز الصحيح (بدون ترجمة) */}
                   <p
                     style={{
                       fontSize: "13px",
@@ -120,8 +128,9 @@ export function PrizesSection({ prizes, activeSection }: PrizesSectionProps) {
                       letterSpacing: "2px",
                     }}
                   >
-                    {t(`ranks.${rank}`)}
+                    {getRankText(tier)}
                   </p>
+                  
                   <h3
                     style={{
                       fontSize: "22px",
