@@ -5,16 +5,10 @@ import createNextIntlPlugin from 'next-intl/plugin';
 const withNextIntl = createNextIntlPlugin();
 
 const nextConfig: NextConfig = {
-  // ✅ زيادة حد حجم الطلب لرفع الصور
+  // ✅ زيادة حد حجم الطلب (لرفع الصور)
   experimental: {
     serverActions: {
       bodySizeLimit: '10mb',
-    },
-  },
-  // ✅ إعدادات إضافية لـ API Routes
-  api: {
-    bodyParser: {
-      sizeLimit: '10mb',
     },
   },
 };
