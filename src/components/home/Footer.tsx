@@ -3,7 +3,6 @@ import { TrophyIcon } from "@/components/ui/Icons";
 import { AppSettings } from "@/types";
 
 export function Footer({ settings }: { settings: AppSettings }) {
-  // 👇 تصحيح: استخدم 'HomePage.footer'
   const t = useTranslations('HomePage.footer');
 
   return (
@@ -34,8 +33,23 @@ export function Footer({ settings }: { settings: AppSettings }) {
       <p style={{ color: "#6b7280", fontSize: "14px", marginBottom: "8px" }}>
         {t('copyright', { year: new Date().getFullYear() })}
       </p>
+
+      {/* ✅ الدعم الفني عبر واتساب - رابط قابل للنقر */}
       <p style={{ color: "#4b5563", fontSize: "12px" }}>
         {t('support_email')}
+        <a
+          href="https://wa.me/972569992790"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            color: "#fbbf24",
+            textDecoration: "none",
+            fontWeight: "600",
+            marginRight: "4px",
+          }}
+        >
+          📱 واتساب 0569992790
+        </a>
       </p>
     </footer>
   );
