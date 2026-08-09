@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://forsa-app-lovat.vercel.app'; // استخدم رابطك الحالي
+  const baseUrl = 'https://forsa-app-ten.vercel.app'; // استخدم رابطك الحالي
 
   return [
     {
