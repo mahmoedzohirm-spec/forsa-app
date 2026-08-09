@@ -245,23 +245,64 @@ export default function AdminDashboard({
     }
   };
 
+  // ===== ✅ دالة ضغط الصورة وتحويلها إلى Base64 (معدلة) =====
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
+      // تحقق من حجم الملف (حد أقصى 5 ميجابايت)
+      if (file.size > 5 * 1024 * 1024) {
+        reject(new Error("حجم الصورة يتجاوز 5 ميجابايت. يرجى استخدام صورة أصغر."));
+        return;
+      }
+
       const reader = new FileReader();
       reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result as string);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const MAX_WIDTH = 800;
+          const MAX_HEIGHT = 800;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height = (height * MAX_WIDTH) / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width = (width * MAX_HEIGHT) / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          // تصدير الصورة بجودة 70% (تقليل الحجم)
+          const compressed = canvas.toDataURL("image/jpeg", 0.7);
+          resolve(compressed);
+        };
+        img.onerror = () => reject(new Error("فشل تحميل الصورة"));
+        img.src = event.target?.result as string;
+      };
       reader.onerror = (error) => reject(error);
     });
   };
 
+  // ===== دوال رفع الصور (معدلة لعرض رسائل الخطأ) =====
   const handleNewPrizeImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
       const base64 = await fileToBase64(file);
       setNewPrize({ ...newPrize, image: base64 });
-    } catch {
-      showToast("⚠️ فشل قراءة الصورة");
+      showToast("✅ تم رفع الصورة بنجاح");
+    } catch (error: any) {
+      showToast(`⚠️ ${error.message || "فشل قراءة الصورة"}`);
     }
   };
 
@@ -271,8 +312,9 @@ export default function AdminDashboard({
     try {
       const base64 = await fileToBase64(file);
       setEditPrize({ ...editPrize, image: base64 });
-    } catch {
-      showToast("⚠️ فشل قراءة الصورة");
+      showToast("✅ تم رفع الصورة بنجاح");
+    } catch (error: any) {
+      showToast(`⚠️ ${error.message || "فشل قراءة الصورة"}`);
     }
   };
 
