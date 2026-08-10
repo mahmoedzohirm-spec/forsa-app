@@ -16,7 +16,8 @@ export default function LuckyWheel({
   const [rotation, setRotation] = useState(0);
   const rotationRef = useRef(0);
   const animFrameRef = useRef<number | null>(null);
-  
+
+  // متغير لتتبع أول سحب
   const hasUsedFixedWinner = useRef(false);
 
   const drawWheel = useCallback(
@@ -34,6 +35,7 @@ export default function LuckyWheel({
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+      // حدود خارجية
       ctx.beginPath();
       ctx.arc(cx, cy, radius + 8, 0, Math.PI * 2);
       ctx.strokeStyle = "#f59e0b";
@@ -65,6 +67,7 @@ export default function LuckyWheel({
         ctx.restore();
       }
 
+      // الدائرة الوسطى
       ctx.beginPath();
       ctx.arc(cx, cy, 28, 0, Math.PI * 2);
       const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 28);
@@ -76,6 +79,7 @@ export default function LuckyWheel({
       ctx.lineWidth = 2;
       ctx.stroke();
 
+      // السهم (المؤشر) - يبقى ثابتاً عند الزاوية 0 (يمين)
       ctx.beginPath();
       ctx.moveTo(cx + radius - 10, cy);
       ctx.lineTo(cx + radius + 20, cy - 12);
@@ -98,38 +102,40 @@ export default function LuckyWheel({
     if (spinning || tickets.length === 0) return;
     setSpinning(true);
 
+    // ===== 1. اختيار الفائز =====
     let targetTicket: DrawTicket | null = null;
 
+    // أول سحب فقط: استخدم الرقم الثابت إن وجد
     if (!hasUsedFixedWinner.current && fixedWinnerTicket !== undefined && fixedWinnerTicket !== null) {
       targetTicket = tickets.find((t) => t.number === fixedWinnerTicket) || null;
       if (targetTicket) {
         hasUsedFixedWinner.current = true;
-        console.log("🎯 أول سحب: تم تثبيت الفائز على رقم", fixedWinnerTicket);
+        console.log("🎯 أول سحب: تثبيت الفائز على رقم", fixedWinnerTicket);
       }
     }
 
+    // إذا لم نجد الرقم الثابت أو تم استخدامه، اختر عشوائياً
     if (!targetTicket) {
       targetTicket = tickets[Math.floor(Math.random() * tickets.length)];
-      if (hasUsedFixedWinner.current) {
-        console.log("🔄 سحب عشوائي بعد أول مرة");
-      }
+      console.log("🔄 سحب عشوائي:", targetTicket.number);
     }
 
-    // 🧮 حساب الزاوية المستهدفة
+    // ===== 2. حساب الزاوية النهائية (الطريقة الصحيحة) =====
     const targetIndex = tickets.indexOf(targetTicket);
     const numSlices = tickets.length;
     const sliceAngle = (2 * Math.PI) / numSlices;
-    const targetAngle = sliceAngle * targetIndex + sliceAngle / 2;
 
-    // 🧮 حساب الفرق للوصول إلى الزاوية المستهدفة
-    const currentAngle = rotation % (2 * Math.PI);
-    let delta = targetAngle - currentAngle;
-    if (delta < 0) delta += 2 * Math.PI;
+    // الزاوية التي تجعل الشريحة المستهدفة في مواجهة السهم (الزاوية 0)
+    // targetIndex * sliceAngle + sliceAngle/2 هي زاوية منتصف الشريحة
+    // لجعلها عند الزاوية 0: rot + (targetIndex * sliceAngle + sliceAngle/2) = 0
+    // => rot = -(targetIndex * sliceAngle + sliceAngle/2)
+    const targetRotation = -(targetIndex * sliceAngle + sliceAngle / 2);
 
-    // 🧮 إضافة لفات إضافية
-    const extraSpins = 8 + Math.random() * 5;
-    const totalRot = rotation + extraSpins * (2 * Math.PI) + delta;
+    // ===== 3. إضافة لفات إضافية (8-13 لفة) للحركة الطبيعية =====
+    const extraSpins = 8 + Math.random() * 5; // 8-13 لفة
+    const totalRot = targetRotation + extraSpins * (2 * Math.PI);
 
+    // ===== 4. تشغيل الحركة =====
     const duration = 5000;
     const startTime = performance.now();
     const startRot = rotation;
@@ -148,6 +154,7 @@ export default function LuckyWheel({
       } else {
         setRotation(currentRot);
         setSpinning(false);
+        // ===== 5. إرسال الفائز (نفس الرقم اللي اخترناه) =====
         onWinner(targetTicket);
       }
     };
