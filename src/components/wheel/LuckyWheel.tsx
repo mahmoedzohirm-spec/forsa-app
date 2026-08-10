@@ -2,7 +2,15 @@ import { useRef, useState, useEffect, useCallback } from "react";
 import { DrawTicket } from "@/types";
 import { Spinner } from "@/components/ui/Spinner";
 
-export default function LuckyWheel({ tickets, onWinner }: { tickets: DrawTicket[]; onWinner: (ticket: DrawTicket) => void }) {
+export default function LuckyWheel({ 
+  tickets, 
+  onWinner, 
+  fixedWinnerTicket  // 👈 جديد
+}: { 
+  tickets: DrawTicket[]; 
+  onWinner: (ticket: DrawTicket) => void;
+  fixedWinnerTicket?: number; // 👈 اختياري، لتحديد فائز ثابت
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [spinning, setSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
@@ -88,8 +96,31 @@ export default function LuckyWheel({ tickets, onWinner }: { tickets: DrawTicket[
     if (spinning || tickets.length === 0) return;
     setSpinning(true);
 
+    // 🔍 تحديد البطاقة المستهدفة (ثابتة أم عشوائية)
+    let targetTicket: DrawTicket | null = null;
+    if (fixedWinnerTicket !== undefined && fixedWinnerTicket !== null) {
+      targetTicket = tickets.find(t => t.number === fixedWinnerTicket) || null;
+    }
+    // إذا لم يتم تحديد رقم ثابت أو لم يتم العثور عليه، نختار عشوائياً
+    if (!targetTicket) {
+      targetTicket = tickets[Math.floor(Math.random() * tickets.length)];
+    }
+
+    // حساب الزوايا
+    const numSlices = tickets.length;
+    const sliceAngle = (2 * Math.PI) / numSlices;
+    const targetIndex = tickets.indexOf(targetTicket);
+    // الزاوية التي تجعل المؤشر (عند الزاوية 0) يقف في منتصف الشريحة المستهدفة
+    const targetAngle = sliceAngle * targetIndex + sliceAngle / 2;
+
+    // إضافة لفات عشوائية (8-13 لفة) لجعل الحركة طبيعية
     const extraSpins = 8 + Math.random() * 5;
-    const totalRot = rotation + extraSpins * Math.PI * 2 + Math.random() * Math.PI * 2;
+    // حساب الدوران الكلي المطلوب: نضيف لفات كاملة ثم نصل إلى الزاوية المستهدفة
+    // نأخذ الفرق بين الزاوية الحالية والزاوية المستهدفة بحيث يكون موجباً
+    let delta = targetAngle - (rotation % (2 * Math.PI));
+    while (delta < 0) delta += 2 * Math.PI;
+    const totalRot = rotation + extraSpins * 2 * Math.PI + delta;
+
     const duration = 5000;
     const startTime = performance.now();
     const startRot = rotation;
@@ -108,14 +139,8 @@ export default function LuckyWheel({ tickets, onWinner }: { tickets: DrawTicket[
       } else {
         setRotation(currentRot);
         setSpinning(false);
-
-        const numSlices = tickets.length;
-        const sliceAngle = (2 * Math.PI) / numSlices;
-        const normalizedRot = ((currentRot % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
-        const pointerAngle = 0;
-        const adjustedAngle = ((pointerAngle - normalizedRot) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
-        const winnerIndex = Math.floor(adjustedAngle / sliceAngle) % numSlices;
-        onWinner(tickets[winnerIndex]);
+        // نستدعي onWinner بالبطاقة المستهدفة (التي قد تكون ثابتة أو عشوائية)
+        onWinner(targetTicket);
       }
     };
 
