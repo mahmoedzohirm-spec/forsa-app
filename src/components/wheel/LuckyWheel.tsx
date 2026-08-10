@@ -63,7 +63,9 @@ export default function LuckyWheel({
         ctx.textAlign = "right";
         ctx.fillStyle = isPurple ? "#fbbf24" : "#1a0a3c";
         ctx.font = `bold ${numSlices > 20 ? 10 : numSlices > 10 ? 12 : 14}px Cairo,Inter,sans-serif`;
-        ctx.fillText(String(items[i].number || ""), radius - 12, 5);
+        // ✅ التعديل الوحيد: عرض user_name إذا كان موجوداً، وإلا عرض number
+        const label = items[i].user_name || String(items[i].number || "");
+        ctx.fillText(label, radius - 12, 5);
         ctx.restore();
       }
 
@@ -97,10 +99,6 @@ export default function LuckyWheel({
       ctx.strokeStyle = "#ffffff";
       ctx.lineWidth = 2.5;
       ctx.stroke();
-
-      // =====================================================
-      // ❌ تم حذف المؤشر الجانبي الأيمن (الذهبي) نهائياً
-      // =====================================================
     },
     [tickets]
   );
