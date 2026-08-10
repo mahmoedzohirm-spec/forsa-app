@@ -116,12 +116,17 @@ export default function LuckyWheel({
     // ===== 1. اختيار الفائز =====
     let targetTicket: DrawTicket | null = null;
 
-    // أول سحب فقط: استخدم الرقم الثابت إن وجد
+    // 👇 التعديل: البحث عن الخانة التي تحتوي على الرقم الثابت (باستخدام rangeStart/rangeEnd)
     if (!hasUsedFixedWinner.current && fixedWinnerTicket !== undefined && fixedWinnerTicket !== null) {
-      targetTicket = tickets.find((t) => t.number === fixedWinnerTicket) || null;
+      // نبحث أولاً عن خانة تحتوي على الرقم عبر rangeStart/rangeEnd (إن وجدت)
+      targetTicket = tickets.find((t: any) => t.rangeStart !== undefined && t.rangeStart <= fixedWinnerTicket && t.rangeEnd >= fixedWinnerTicket) || null;
+      // إذا لم نجد، نبحث بالرقم (للتوافق مع البطاقات العادية)
+      if (!targetTicket) {
+        targetTicket = tickets.find((t) => t.number === fixedWinnerTicket) || null;
+      }
       if (targetTicket) {
         hasUsedFixedWinner.current = true;
-        console.log("🎯 أول سحب: تثبيت الفائز على رقم", fixedWinnerTicket);
+        console.log("🎯 أول سحب: تثبيت الفائز على الخانة التي تحتوي على", fixedWinnerTicket);
       }
     }
 
@@ -171,7 +176,7 @@ export default function LuckyWheel({
       } else {
         setRotation(currentRot);
         setSpinning(false);
-        // ===== 5. إرسال الفائز (نفس الرقم اللي اخترناه) =====
+        // ===== 5. إرسال الفائز (نفس الخانة التي اخترناها) =====
         onWinner(targetTicket);
       }
     };
