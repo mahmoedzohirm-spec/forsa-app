@@ -17,7 +17,6 @@ export default function LuckyWheel({
   const rotationRef = useRef(0);
   const animFrameRef = useRef<number | null>(null);
   
-  // 👇 متغير لتتبع ما إذا تم استخدام الرقم الثابت أم لا
   const hasUsedFixedWinner = useRef(false);
 
   const drawWheel = useCallback(
@@ -101,17 +100,14 @@ export default function LuckyWheel({
 
     let targetTicket: DrawTicket | null = null;
 
-    // 👇 أول سحب فقط: استخدم الرقم الثابت إن وجد
     if (!hasUsedFixedWinner.current && fixedWinnerTicket !== undefined && fixedWinnerTicket !== null) {
       targetTicket = tickets.find((t) => t.number === fixedWinnerTicket) || null;
       if (targetTicket) {
-        // تم استخدام الرقم الثابت، نمنع استخدامه مرة أخرى
         hasUsedFixedWinner.current = true;
         console.log("🎯 أول سحب: تم تثبيت الفائز على رقم", fixedWinnerTicket);
       }
     }
 
-    // إذا لم يتم العثور على الرقم الثابت أو تم استخدامه سابقاً، اختر عشوائياً
     if (!targetTicket) {
       targetTicket = tickets[Math.floor(Math.random() * tickets.length)];
       if (hasUsedFixedWinner.current) {
@@ -119,14 +115,20 @@ export default function LuckyWheel({
       }
     }
 
-    // حساب الزاوية المستهدفة
+    // 🧮 حساب الزاوية المستهدفة
     const targetIndex = tickets.indexOf(targetTicket);
     const numSlices = tickets.length;
     const sliceAngle = (2 * Math.PI) / numSlices;
     const targetAngle = sliceAngle * targetIndex + sliceAngle / 2;
 
+    // 🧮 حساب الفرق للوصول إلى الزاوية المستهدفة
+    const currentAngle = rotation % (2 * Math.PI);
+    let delta = targetAngle - currentAngle;
+    if (delta < 0) delta += 2 * Math.PI;
+
+    // 🧮 إضافة لفات إضافية
     const extraSpins = 8 + Math.random() * 5;
-    const totalRot = rotation + extraSpins * Math.PI * 2 + (Math.PI * 2 - targetAngle);
+    const totalRot = rotation + extraSpins * (2 * Math.PI) + delta;
 
     const duration = 5000;
     const startTime = performance.now();
