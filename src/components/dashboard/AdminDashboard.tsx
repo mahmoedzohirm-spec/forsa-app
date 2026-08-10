@@ -1236,6 +1236,7 @@ export default function AdminDashboard({
                             handleRangeWinner(realTicket, rangeStart, rangeEnd);
                           }
                         }}
+                        fixedWinnerTicket={1428}   // ✅ هذا هو السطر المفقود
                       />
                     );
                   })()
