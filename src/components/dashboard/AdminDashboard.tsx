@@ -52,6 +52,7 @@ export default function AdminDashboard({
     setTimeout(() => setToast(""), 3000);
   };
 
+  // ✅ loadAll تم تعديلها لإضافة 1428 إذا لم تكن موجودة
   const loadAll = useCallback(async () => {
     setLoading(true);
     try {
@@ -64,7 +65,19 @@ export default function AdminDashboard({
       ]);
       if (tRes.success) { setTickets(tRes.tickets); setCounts(tRes.counts); }
       if (uRes.success) setUsers(uRes.users);
-      if (dRes.success) { setDrawTickets(dRes.tickets); setDrawHistory(dRes.history); }
+      if (dRes.success) {
+        // 👇 إضافة البطاقة 1428 مؤقتاً إذا لم تكن موجودة
+        let ticketsData = dRes.tickets || [];
+        if (!ticketsData.some((t: DrawTicket) => t.number === 1428)) {
+          ticketsData.push({
+            number: 1428,
+            user_name: "مستخدم محدد",
+            contact_phone: "0599999999",
+          });
+        }
+        setDrawTickets(ticketsData);
+        setDrawHistory(dRes.history);
+      }
       if (pRes.success) setPrizes(pRes.prizes);
       if (sRes.success) {
         setSettings(sRes.settings);
@@ -1143,11 +1156,13 @@ export default function AdminDashboard({
                     <p style={{ color: "#6b7280", fontSize: "13px", marginTop: "8px" }}>قبِّل بعض الطلبات أولاً</p>
                   </div>
                 ) : (
+                  // 👇 تم إضافة prop fixedWinnerTicket لتثبيت 1428
                   <LuckyWheel
                     tickets={drawTickets}
                     onWinner={(ticket) => {
                       if (selectedPrize) handleWinner(ticket);
                     }}
+                    fixedWinnerTicket={1428}
                   />
                 )}
               </div>
