@@ -79,16 +79,32 @@ export default function LuckyWheel({
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // السهم (المؤشر) - يبقى ثابتاً عند الزاوية 0 (يمين)
+      // ===== المؤشر الثابت (في الأعلى) =====
+      const pointerAngle = -Math.PI / 2; // أعلى العجلة
+      const pointerLen = 25;
+      const px = cx + radius * Math.cos(pointerAngle);
+      const py = cy + radius * Math.sin(pointerAngle);
+      ctx.beginPath();
+      ctx.moveTo(px, py - pointerLen);
+      ctx.lineTo(px - 12, py);
+      ctx.lineTo(px + 12, py);
+      ctx.closePath();
+      ctx.fillStyle = "#ef4444";
+      ctx.fill();
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // مؤشر جانبي للزينة (اختياري)
       ctx.beginPath();
       ctx.moveTo(cx + radius - 10, cy);
       ctx.lineTo(cx + radius + 20, cy - 12);
       ctx.lineTo(cx + radius + 20, cy + 12);
       ctx.closePath();
-      ctx.fillStyle = "#f59e0b";
+      ctx.fillStyle = "rgba(245, 158, 11, 0.3)";
       ctx.fill();
-      ctx.strokeStyle = "#fff";
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = "rgba(255,255,255,0.2)";
+      ctx.lineWidth = 1;
       ctx.stroke();
     },
     [tickets]
@@ -120,20 +136,29 @@ export default function LuckyWheel({
       console.log("🔄 سحب عشوائي:", targetTicket.number);
     }
 
-    // ===== 2. حساب الزاوية النهائية (الطريقة الصحيحة) =====
+    // ===== 2. حساب الزاوية المستهدفة (المؤشر في الأعلى) =====
     const targetIndex = tickets.indexOf(targetTicket);
     const numSlices = tickets.length;
     const sliceAngle = (2 * Math.PI) / numSlices;
+    
+    // زاوية منتصف الشريحة المستهدفة
+    const targetSliceAngle = targetIndex * sliceAngle + sliceAngle / 2;
+    
+    // المؤشر في الأعلى (الزاوية -PI/2)
+    const pointerAngle = -Math.PI / 2;
+    
+    // الزاوية التي تجعل الشريحة في مواجهة المؤشر:
+    // rotation + targetSliceAngle = pointerAngle (mod 2PI)
+    // => rotation = pointerAngle - targetSliceAngle
+    let targetRotation = pointerAngle - targetSliceAngle;
+    
+    // نضبط لتكون في المدى [0, 2PI) للقاعدة
+    targetRotation = ((targetRotation % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
 
-    // الزاوية التي تجعل الشريحة المستهدفة في مواجهة السهم (الزاوية 0)
-    // targetIndex * sliceAngle + sliceAngle/2 هي زاوية منتصف الشريحة
-    // لجعلها عند الزاوية 0: rot + (targetIndex * sliceAngle + sliceAngle/2) = 0
-    // => rot = -(targetIndex * sliceAngle + sliceAngle/2)
-    const targetRotation = -(targetIndex * sliceAngle + sliceAngle / 2);
-
-    // ===== 3. إضافة لفات إضافية (8-13 لفة) للحركة الطبيعية =====
-    const extraSpins = 8 + Math.random() * 5; // 8-13 لفة
-    const totalRot = targetRotation + extraSpins * (2 * Math.PI);
+    // ===== 3. إضافة 20 لفة سريعة =====
+    const extraSpins = 20;
+    // نضيف لفات إضافية مع مراعاة الدوران الحالي
+    const totalRot = rotation + extraSpins * (2 * Math.PI) + (targetRotation - rotation % (2 * Math.PI));
 
     // ===== 4. تشغيل الحركة =====
     const duration = 5000;
