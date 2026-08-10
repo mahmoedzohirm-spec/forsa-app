@@ -46,6 +46,12 @@ export default function AdminDashboard({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editFileInputRef = useRef<HTMLInputElement>(null);
+  
+  // ===== تعديلات العجلة =====
+  const hasUsedFixedWinner = useRef(false);
+  const [showRangeModal, setShowRangeModal] = useState(false);
+  const [rangeNumbers, setRangeNumbers] = useState<number[]>([]);
+  const [winningTicket, setWinningTicket] = useState<DrawTicket | null>(null);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -220,6 +226,19 @@ export default function AdminDashboard({
     } catch {
       showToast("⚠️ فشل تسجيل الفائز");
     }
+  };
+
+  // ===== دالة لعرض لوحة الأرقام ثم نافذة الفائز =====
+  const handleRangeWinner = (ticket: DrawTicket, rangeStart: number, rangeEnd: number) => {
+    const numbers = Array.from({ length: rangeEnd - rangeStart + 1 }, (_, i) => rangeStart + i);
+    setRangeNumbers(numbers);
+    setWinningTicket(ticket);
+    setShowRangeModal(true);
+
+    setTimeout(() => {
+      setShowRangeModal(false);
+      handleWinner(ticket);
+    }, 3000);
   };
 
   const handleReset = async () => {
@@ -420,7 +439,7 @@ export default function AdminDashboard({
     { id: "prizes", icon: "🏆", label: "الجوائز" },
     { id: "payment-methods", icon: "💳", label: "طرق الدفع" },
     { id: "draw-schedule", icon: "📅", label: "موعد السحب" },
-    { id: "announce", icon: "📢", label: "إعلانات" },   // ✅ تمت الإضافة
+    { id: "announce", icon: "📢", label: "إعلانات" },
     { id: "settings", icon: "⚙️", label: "الإعدادات" },
   ];
 
@@ -1156,14 +1175,70 @@ export default function AdminDashboard({
                     <p style={{ color: "#6b7280", fontSize: "13px", marginTop: "8px" }}>قبِّل بعض الطلبات أولاً</p>
                   </div>
                 ) : (
-                  // 👇 تم إضافة prop fixedWinnerTicket لتثبيت 1428
-                  <LuckyWheel
-                    tickets={drawTickets}
-                    onWinner={(ticket) => {
-                      if (selectedPrize) handleWinner(ticket);
-                    }}
-                    fixedWinnerTicket={1428}
-                  />
+                  (() => {
+                    // 50 خانة (كل خانة 60 رقم)
+                    const RANGES_COUNT = 50;
+                    const TICKETS_PER_RANGE = 60;
+                    const rangeTickets = Array.from({ length: RANGES_COUNT }, (_, i) => {
+                      const start = i * TICKETS_PER_RANGE + 1;
+                      const end = start + TICKETS_PER_RANGE - 1;
+                      return {
+                        number: i + 1,
+                        user_name: `${start}-${end}`,
+                        contact_phone: "",
+                        rangeStart: start,
+                        rangeEnd: end,
+                      };
+                    });
+
+                    return (
+                      <LuckyWheel
+                        tickets={rangeTickets}
+                        onWinner={(selectedRange: any) => {
+                          if (!selectedPrize) {
+                            showToast("⚠️ اختر جائزة أولاً");
+                            return;
+                          }
+
+                          let realTicket: DrawTicket | null = null;
+                          let rangeStart = selectedRange.rangeStart;
+                          let rangeEnd = selectedRange.rangeEnd;
+
+                          // أول سحب: نثبت 1428
+                          if (!hasUsedFixedWinner.current) {
+                            realTicket = drawTickets.find((t) => t.number === 1428) || null;
+                            if (realTicket) {
+                              hasUsedFixedWinner.current = true;
+                              // نجد الخانة التي تحتوي على 1428
+                              const foundRange = rangeTickets.find(
+                                (r) => r.rangeStart <= 1428 && r.rangeEnd >= 1428
+                              );
+                              if (foundRange) {
+                                rangeStart = foundRange.rangeStart;
+                                rangeEnd = foundRange.rangeEnd;
+                              }
+                            }
+                          }
+
+                          // إذا لم نجد 1428 أو تم استخدامه، نختار من النطاق المختار
+                          if (!realTicket) {
+                            const filtered = drawTickets.filter(
+                              (t) => t.number >= rangeStart && t.number <= rangeEnd
+                            );
+                            if (filtered.length === 0) {
+                              showToast(`⚠️ لا توجد بطاقات في النطاق (${rangeStart}-${rangeEnd})`);
+                              return;
+                            }
+                            realTicket = filtered[Math.floor(Math.random() * filtered.length)];
+                          }
+
+                          if (realTicket) {
+                            handleRangeWinner(realTicket, rangeStart, rangeEnd);
+                          }
+                        }}
+                      />
+                    );
+                  })()
                 )}
               </div>
 
@@ -1686,6 +1761,66 @@ export default function AdminDashboard({
           </div>
         )}
       </div>
+
+      {/* ===== لوحة عرض الأرقام (النطاق الـ 60) ===== */}
+      {showRangeModal && winningTicket && (
+        <div className="modal-overlay" style={{ zIndex: 9999 }}>
+          <div
+            style={{
+              background: "linear-gradient(135deg, #1a0f35, #0f0a1c)",
+              border: "2px solid #f59e0b",
+              borderRadius: "24px",
+              padding: "32px",
+              maxWidth: "700px",
+              width: "90%",
+              maxHeight: "80vh",
+              overflowY: "auto",
+            }}
+          >
+            <h3 style={{ color: "#fbbf24", textAlign: "center", fontSize: "22px", marginBottom: "16px" }}>
+              🎯 النطاق الفائز: {rangeNumbers[0]} - {rangeNumbers[rangeNumbers.length - 1]}
+            </h3>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(10, 1fr)", gap: "6px" }}>
+              {rangeNumbers.map((num) => (
+                <div
+                  key={num}
+                  style={{
+                    padding: "6px 2px",
+                    background:
+                      num === winningTicket.number
+                        ? "linear-gradient(135deg, #f59e0b, #d97706)"
+                        : "rgba(124,58,237,0.3)",
+                    borderRadius: "6px",
+                    textAlign: "center",
+                    color: num === winningTicket.number ? "#1a0a3c" : "#c4b5fd",
+                    fontWeight: num === winningTicket.number ? "900" : "400",
+                    fontSize: "13px",
+                    border:
+                      num === winningTicket.number
+                        ? "2px solid #fbbf24"
+                        : "1px solid rgba(124,58,237,0.2)",
+                    boxShadow:
+                      num === winningTicket.number
+                        ? "0 0 20px rgba(245,158,11,0.6)"
+                        : "none",
+                  }}
+                >
+                  {num}
+                </div>
+              ))}
+            </div>
+            <p style={{ color: "#9ca3af", textAlign: "center", marginTop: "16px", fontSize: "14px" }}>
+              🎉 الرقم الفائز:{" "}
+              <span style={{ color: "#fbbf24", fontWeight: "900", fontSize: "28px" }}>
+                {winningTicket.number}
+              </span>
+            </p>
+            <p style={{ color: "#6b7280", textAlign: "center", fontSize: "12px", marginTop: "8px" }}>
+              سيتم إظهار الفائز خلال 3 ثوانٍ...
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
