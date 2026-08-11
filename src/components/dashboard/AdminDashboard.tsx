@@ -61,6 +61,7 @@ export default function AdminDashboard({
   // ✅ loadAll تم تعديلها لإضافة 1428 إذا لم تكن موجودة
   const loadAll = useCallback(async () => {
     setLoading(true);
+  
     try {
       const [tRes, uRes, dRes, pRes, sRes] = await Promise.all([
         fetch("/api/tickets?limit=3000").then((r) => r.json()),
@@ -78,6 +79,7 @@ export default function AdminDashboard({
           ticketsData.push({
             number: 1428,
             user_name: "مستخدم محدد",
+          
             contact_phone: "0599999999",
           });
         }
@@ -1177,7 +1179,7 @@ export default function AdminDashboard({
                 ) : (
                   (() => {
                     // 50 خانة (كل خانة 60 رقم)
-                    const RANGES_COUNT = 50;
+                    const RANGES_COUNT = 60;
                     const TICKETS_PER_RANGE = 60;
                     const rangeTickets = Array.from({ length: RANGES_COUNT }, (_, i) => {
                       const start = i * TICKETS_PER_RANGE + 1;
