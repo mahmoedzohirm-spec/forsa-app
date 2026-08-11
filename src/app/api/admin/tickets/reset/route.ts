@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
 
       // Ensure all 3000 tickets exist
       const values: string[] = [];
-      for (let i = 1; i <= 3000; i++) {
+      for (let i = 1; i <= 5000; i++) {
         values.push(`(${i}, 'available')`);
       }
       const batchSize = 500;
