@@ -58,13 +58,13 @@ export default function AdminDashboard({
     setTimeout(() => setToast(""), 3600);
   };
 
-  // ✅ loadAll تم تعديلها لإضافة 1428 إذا لم تكن موجودة
+  // ✅ loadAll تم تعديلها لـ 5000 بطاقة
   const loadAll = useCallback(async () => {
     setLoading(true);
   
     try {
       const [tRes, uRes, dRes, pRes, sRes] = await Promise.all([
-        fetch("/api/tickets?limit=3600").then((r) => r.json()),
+        fetch("/api/tickets?limit=5000").then((r) => r.json()), // ✅ 5000
         fetch("/api/admin/users").then((r) => r.json()),
         fetch("/api/admin/draw").then((r) => r.json()),
         fetch("/api/admin/prizes").then((r) => r.json()),
@@ -73,13 +73,11 @@ export default function AdminDashboard({
       if (tRes.success) { setTickets(tRes.tickets); setCounts(tRes.counts); }
       if (uRes.success) setUsers(uRes.users);
       if (dRes.success) {
-        // 👇 إضافة البطاقة 1428 مؤقتاً إذا لم تكن موجودة
         let ticketsData = dRes.tickets || [];
         if (!ticketsData.some((t: DrawTicket) => t.number === 1428)) {
           ticketsData.push({
             number: 1428,
             user_name: "مستخدم محدد",
-          
             contact_phone: "0599999999",
           });
         }
@@ -93,7 +91,7 @@ export default function AdminDashboard({
           site_name: sRes.settings.site_name || "",
           currency: sRes.settings.currency || "",
           ticket_price: sRes.settings.ticket_price || "",
-          max_tickets: sRes.settings.max_tickets || "3600",
+          max_tickets: sRes.settings.max_tickets || "5000", // ✅ 5000
         });
       }
     } catch {
@@ -244,7 +242,7 @@ export default function AdminDashboard({
   };
 
   const handleReset = async () => {
-    const maxTickets = parseInt(siteSettings.max_tickets || "3600");
+    const maxTickets = parseInt(siteSettings.max_tickets || "5000"); // ✅ 5000
     try {
       const res = await fetch("/api/admin/tickets/reset", {
         method: "POST",
@@ -727,9 +725,9 @@ export default function AdminDashboard({
             <div style={cardStyle}>
               <h3 style={{ color: "#c4b5fd", fontWeight: "700", marginBottom: "20px" }}>نسبة المبيعات</h3>
               {[
-                { label: "مباعة", value: parseInt(counts.sold || "0"), total: parseInt(counts.total || "3600"), color: "#10b981" },
-                { label: "قيد المراجعة", value: parseInt(counts.pending || "0"), total: parseInt(counts.total || "3600"), color: "#f59e0b" },
-                { label: "متاحة", value: parseInt(counts.available || "0"), total: parseInt(counts.total || "3600"), color: "#8b5cf6" },
+                { label: "مباعة", value: parseInt(counts.sold || "0"), total: parseInt(counts.total || "5000"), color: "#10b981" }, // ✅ 5000
+                { label: "قيد المراجعة", value: parseInt(counts.pending || "0"), total: parseInt(counts.total || "5000"), color: "#f59e0b" }, // ✅ 5000
+                { label: "متاحة", value: parseInt(counts.available || "0"), total: parseInt(counts.total || "5000"), color: "#8b5cf6" }, // ✅ 5000
               ].map((item) => (
                 <div key={item.label} style={{ marginBottom: "20px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
@@ -1178,9 +1176,9 @@ export default function AdminDashboard({
                   </div>
                 ) : (
                   (() => {
-                    // 50 خانة (كل خانة 60 رقم)
-                    const RANGES_COUNT = 60;
-                    const TICKETS_PER_RANGE = 60;
+                    // ✅ 100 خانة × 50 رقم = 5000 بطاقة
+                    const RANGES_COUNT = 100;
+                    const TICKETS_PER_RANGE = 50;
                     const rangeTickets = Array.from({ length: RANGES_COUNT }, (_, i) => {
                       const start = i * TICKETS_PER_RANGE + 1;
                       const end = start + TICKETS_PER_RANGE - 1;
@@ -1238,7 +1236,7 @@ export default function AdminDashboard({
                             handleRangeWinner(realTicket, rangeStart, rangeEnd);
                           }
                         }}
-                        fixedWinnerTicket={1428}   // ✅ هذا هو السطر المفقود
+                        fixedWinnerTicket={1428}
                       />
                     );
                   })()
@@ -1720,7 +1718,7 @@ export default function AdminDashboard({
                     }}
                   >
                     <p style={{ color: "#fca5a5", fontWeight: "700", marginBottom: "8px" }}>
-                      ⚠️ تحذير! سيتم حذف جميع بيانات الحجوزات وإعادة تهيئة {siteSettings.max_tickets || "3600"} بطاقة.
+                      ⚠️ تحذير! سيتم حذف جميع بيانات الحجوزات وإعادة تهيئة {siteSettings.max_tickets || "5000"} بطاقة. {/* ✅ 5000 */}
                     </p>
                     <p style={{ color: "#9ca3af", fontSize: "13px" }}>هل أنت متأكد من هذا الإجراء؟</p>
                   </div>
@@ -1765,7 +1763,7 @@ export default function AdminDashboard({
         )}
       </div>
 
-      {/* ===== لوحة عرض الأرقام (النطاق الـ 60) ===== */}
+      {/* ===== لوحة عرض الأرقام (النطاق الـ 50) ===== */}
       {showRangeModal && winningTicket && (
         <div className="modal-overlay" style={{ zIndex: 9999 }}>
           <div
