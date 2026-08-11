@@ -55,7 +55,7 @@ export default function AdminDashboard({
 
   const showToast = (msg: string) => {
     setToast(msg);
-    setTimeout(() => setToast(""), 3000);
+    setTimeout(() => setToast(""), 3600);
   };
 
   // ✅ loadAll تم تعديلها لإضافة 1428 إذا لم تكن موجودة
@@ -64,7 +64,7 @@ export default function AdminDashboard({
   
     try {
       const [tRes, uRes, dRes, pRes, sRes] = await Promise.all([
-        fetch("/api/tickets?limit=3000").then((r) => r.json()),
+        fetch("/api/tickets?limit=3600").then((r) => r.json()),
         fetch("/api/admin/users").then((r) => r.json()),
         fetch("/api/admin/draw").then((r) => r.json()),
         fetch("/api/admin/prizes").then((r) => r.json()),
@@ -93,7 +93,7 @@ export default function AdminDashboard({
           site_name: sRes.settings.site_name || "",
           currency: sRes.settings.currency || "",
           ticket_price: sRes.settings.ticket_price || "",
-          max_tickets: sRes.settings.max_tickets || "3000",
+          max_tickets: sRes.settings.max_tickets || "3600",
         });
       }
     } catch {
@@ -240,11 +240,11 @@ export default function AdminDashboard({
     setTimeout(() => {
       setShowRangeModal(false);
       handleWinner(ticket);
-    }, 3000);
+    }, 3600);
   };
 
   const handleReset = async () => {
-    const maxTickets = parseInt(siteSettings.max_tickets || "3000");
+    const maxTickets = parseInt(siteSettings.max_tickets || "3600");
     try {
       const res = await fetch("/api/admin/tickets/reset", {
         method: "POST",
@@ -727,9 +727,9 @@ export default function AdminDashboard({
             <div style={cardStyle}>
               <h3 style={{ color: "#c4b5fd", fontWeight: "700", marginBottom: "20px" }}>نسبة المبيعات</h3>
               {[
-                { label: "مباعة", value: parseInt(counts.sold || "0"), total: parseInt(counts.total || "3000"), color: "#10b981" },
-                { label: "قيد المراجعة", value: parseInt(counts.pending || "0"), total: parseInt(counts.total || "3000"), color: "#f59e0b" },
-                { label: "متاحة", value: parseInt(counts.available || "0"), total: parseInt(counts.total || "3000"), color: "#8b5cf6" },
+                { label: "مباعة", value: parseInt(counts.sold || "0"), total: parseInt(counts.total || "3600"), color: "#10b981" },
+                { label: "قيد المراجعة", value: parseInt(counts.pending || "0"), total: parseInt(counts.total || "3600"), color: "#f59e0b" },
+                { label: "متاحة", value: parseInt(counts.available || "0"), total: parseInt(counts.total || "3600"), color: "#8b5cf6" },
               ].map((item) => (
                 <div key={item.label} style={{ marginBottom: "20px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
@@ -1720,7 +1720,7 @@ export default function AdminDashboard({
                     }}
                   >
                     <p style={{ color: "#fca5a5", fontWeight: "700", marginBottom: "8px" }}>
-                      ⚠️ تحذير! سيتم حذف جميع بيانات الحجوزات وإعادة تهيئة {siteSettings.max_tickets || "3000"} بطاقة.
+                      ⚠️ تحذير! سيتم حذف جميع بيانات الحجوزات وإعادة تهيئة {siteSettings.max_tickets || "3600"} بطاقة.
                     </p>
                     <p style={{ color: "#9ca3af", fontSize: "13px" }}>هل أنت متأكد من هذا الإجراء؟</p>
                   </div>
