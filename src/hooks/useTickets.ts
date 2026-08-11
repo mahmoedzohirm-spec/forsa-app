@@ -16,7 +16,7 @@ export const useTickets = () => {
   const loadTickets = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await api.getTickets(5000);
+      const data = await api.getTickets(5000); // ✅ تم التغيير إلى 5000
       if (data.success) {
         setTickets(data.tickets);
         setCounts(data.counts);
