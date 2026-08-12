@@ -33,6 +33,24 @@ export default function BookingModal({
   const [error, setError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // ===== حالة الحجز المتعدد =====
+  const [isMultiple, setIsMultiple] = useState(false);
+  const [selectedTickets, setSelectedTickets] = useState<number[]>([]);
+  const [ticketCount, setTicketCount] = useState(1);
+
+  // ===== استقبال بيانات الحجز المتعدد من page.tsx =====
+  useEffect(() => {
+    if (ticket && (ticket as any).multiple) {
+      const numbers = (ticket as any).numbers || [];
+      if (numbers.length > 0) {
+        setSelectedTickets(numbers);
+        setIsMultiple(true);
+        setTicketCount(numbers.length);
+      }
+    }
+  }, [ticket]);
+
+  // ===== جلب طرق الدفع =====
   useEffect(() => {
     fetch("/api/payment-methods")
       .then((r) => r.json())
@@ -58,30 +76,67 @@ export default function BookingModal({
     reader.readAsDataURL(file);
   };
 
+  // ===== دالة الحجز المعدلة (تدعم الفردي والمتعدد) =====
   const handleSubmit = async () => {
+    // التحقق من الحقول الأساسية
     if (!userName || !userPhone || !contactPhone || !selectedMethod || !receiptImage) {
       setError(t('errors.fill_all_fields'));
       return;
     }
-    setLoading(true); setError("");
+
+    // التحقق من اختيار البطاقات في الحجز المتعدد
+    if (isMultiple && selectedTickets.length === 0) {
+      setError("⚠️ لم يتم اختيار أي بطاقة");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
     try {
-      const res = await fetch("/api/tickets/book", {
+      // تحديد الـ API حسب نوع الحجز
+      const endpoint = isMultiple ? "/api/booking/multiple" : "/api/tickets/book";
+      
+      // بناء الـ body
+      const body = isMultiple ? {
+        ticketNumbers: selectedTickets,
+        userId: user?.id,
+        userName,
+        userPhone,
+        contactPhone,
+        paymentMethod: selectedMethod,
+        receiptImage,
+        notes,
+      } : {
+        ticketNumber: ticket.number,
+        userId: user?.id,
+        userName,
+        userPhone,
+        contactPhone,
+        paymentMethod: selectedMethod,
+        receiptImage,
+        notes,
+      };
+
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ticketNumber: ticket.number,
-          userId: user?.id || null,
-          userName,
-          userPhone,
-          contactPhone,
-          paymentMethod: selectedMethod,
-          receiptImage,
-          notes,
-        }),
+        body: JSON.stringify(body),
       });
+
       const data = await res.json();
-      if (data.success) { onSuccess(); onClose(); } else setError(data.error || t('errors.booking_failed'));
-    } catch { setError(t('errors.server_error')); } finally { setLoading(false); }
+
+      if (data.success) {
+        onSuccess();
+        onClose();
+      } else {
+        setError(data.error || t('errors.booking_failed'));
+      }
+    } catch {
+      setError(t('errors.server_error'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const inputStyle: React.CSSProperties = {
@@ -94,12 +149,56 @@ export default function BookingModal({
     fontSize: "14px",
     fontFamily: "Cairo, Inter, sans-serif",
   };
+
   const labelStyle: React.CSSProperties = {
     fontSize: "13px",
     fontWeight: "600",
     color: "#c4b5fd",
     marginBottom: "6px",
     display: "block",
+  };
+
+  // ===== عرض البطاقات المختارة في الحجز المتعدد =====
+  const renderSelectedTickets = () => {
+    if (!isMultiple || selectedTickets.length === 0) return null;
+
+    const totalPrice = selectedTickets.length * parseInt(ticketPrice);
+
+    return (
+      <div
+        style={{
+          background: "rgba(124, 58, 237, 0.15)",
+          border: "1px solid rgba(124, 58, 237, 0.3)",
+          borderRadius: "12px",
+          padding: "16px",
+          marginBottom: "16px",
+        }}
+      >
+        <p style={{ color: "#c4b5fd", fontSize: "14px", marginBottom: "8px" }}>
+          ✅ البطاقات المختارة ({selectedTickets.length}):
+        </p>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", maxHeight: "120px", overflowY: "auto" }}>
+          {selectedTickets.map((num) => (
+            <span
+              key={num}
+              style={{
+                background: "rgba(245, 158, 11, 0.2)",
+                color: "#fbbf24",
+                padding: "4px 10px",
+                borderRadius: "6px",
+                fontSize: "13px",
+                fontWeight: "700",
+              }}
+            >
+              #{num}
+            </span>
+          ))}
+        </div>
+        <p style={{ color: "#fbbf24", fontSize: "16px", fontWeight: "700", marginTop: "12px" }}>
+          💰 الإجمالي: {totalPrice} {currency}
+        </p>
+      </div>
+    );
   };
 
   return (
@@ -120,21 +219,25 @@ export default function BookingModal({
       >
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
           <div>
-            <h2 style={{ fontSize: "20px", fontWeight: "800", color: "#f59e0b" }}>{t('title')}</h2>
-            <div
-              style={{
-                display: "inline-block",
-                background: "linear-gradient(135deg, #7c3aed, #6d28d9)",
-                borderRadius: "8px",
-                padding: "4px 16px",
-                fontSize: "28px",
-                fontWeight: "900",
-                color: "#fbbf24",
-                marginTop: "4px",
-              }}
-            >
-              #{ticket.number}
-            </div>
+            <h2 style={{ fontSize: "20px", fontWeight: "800", color: "#f59e0b" }}>
+              {isMultiple ? "🎟️ حجز متعدد" : t('title')}
+            </h2>
+            {!isMultiple && (
+              <div
+                style={{
+                  display: "inline-block",
+                  background: "linear-gradient(135deg, #7c3aed, #6d28d9)",
+                  borderRadius: "8px",
+                  padding: "4px 16px",
+                  fontSize: "28px",
+                  fontWeight: "900",
+                  color: "#fbbf24",
+                  marginTop: "4px",
+                }}
+              >
+                #{ticket.number}
+              </div>
+            )}
           </div>
           <button onClick={onClose} style={{ color: "#9ca3af", background: "none", border: "none", cursor: "pointer" }}>
             <XIcon />
@@ -159,6 +262,9 @@ export default function BookingModal({
             <AlertIcon /> {error}
           </div>
         )}
+
+        {/* ===== عرض البطاقات المختارة (للحجز المتعدد) ===== */}
+        {renderSelectedTickets()}
 
         <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
           <div>
