@@ -5,11 +5,11 @@ import { Spinner } from "@/components/ui/Spinner";
 export default function LuckyWheel({
   tickets,
   onWinner,
-  fixedWinnerTicket,
+  fixedWinnerTickets,
 }: {
   tickets: DrawTicket[];
   onWinner: (ticket: DrawTicket) => void;
-  fixedWinnerTicket?: number;
+  fixedWinnerTickets?: number[];
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [spinning, setSpinning] = useState(false);
@@ -17,8 +17,8 @@ export default function LuckyWheel({
   const rotationRef = useRef(0);
   const animFrameRef = useRef<number | null>(null);
 
-  // متغير لتتبع أول سحب
-  const hasUsedFixedWinner = useRef(false);
+  // 👈 عداد لتتبع أي رقم ثابت تم استخدامه
+  const fixedWinnerIndex = useRef(0);
 
   const drawWheel = useCallback(
     (rot: number) => {
@@ -35,7 +35,6 @@ export default function LuckyWheel({
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // حدود خارجية
       ctx.beginPath();
       ctx.arc(cx, cy, radius + 8, 0, Math.PI * 2);
       ctx.strokeStyle = "#f59e0b";
@@ -63,13 +62,11 @@ export default function LuckyWheel({
         ctx.textAlign = "right";
         ctx.fillStyle = isPurple ? "#fbbf24" : "#1a0a3c";
         ctx.font = `bold ${numSlices > 20 ? 10 : numSlices > 10 ? 12 : 14}px Cairo,Inter,sans-serif`;
-        // ✅ التعديل الوحيد: عرض user_name إذا كان موجوداً، وإلا عرض number
         const label = items[i].user_name || String(items[i].number || "");
         ctx.fillText(label, radius - 12, 5);
         ctx.restore();
       }
 
-      // الدائرة الوسطى
       ctx.beginPath();
       ctx.arc(cx, cy, 28, 0, Math.PI * 2);
       const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 28);
@@ -81,20 +78,16 @@ export default function LuckyWheel({
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // =====================================================
-      // ✅ المؤشر الثابت الوحيد (في الأعلى، يشير للأسفل)
-      // =====================================================
-      const pointerAngle = -Math.PI / 2; // أعلى العجلة
+      const pointerAngle = -Math.PI / 2;
       const px = cx + radius * Math.cos(pointerAngle);
       const py = cy + radius * Math.sin(pointerAngle);
 
-      // رأس السهم (بوز) باتجاه الأسفل (نحو العجلة)
       ctx.beginPath();
-      ctx.moveTo(px, py + 25);        // الرأس في الأسفل
-      ctx.lineTo(px - 14, py - 5);    // الزاوية اليسرى في الأعلى
-      ctx.lineTo(px + 14, py - 5);    // الزاوية اليمنى في الأعلى
+      ctx.moveTo(px, py + 25);
+      ctx.lineTo(px - 14, py - 5);
+      ctx.lineTo(px + 14, py - 5);
       ctx.closePath();
-      ctx.fillStyle = "#ef4444";      // لون أحمر واضح
+      ctx.fillStyle = "#ef4444";
       ctx.fill();
       ctx.strokeStyle = "#ffffff";
       ctx.lineWidth = 2.5;
@@ -111,51 +104,48 @@ export default function LuckyWheel({
     if (spinning || tickets.length === 0) return;
     setSpinning(true);
 
-    // ===== 1. اختيار الفائز =====
     let targetTicket: DrawTicket | null = null;
+    const fixedWinners = fixedWinnerTickets || [];
 
-    // 👇 التعديل: البحث عن الخانة التي تحتوي على الرقم الثابت (باستخدام rangeStart/rangeEnd)
-    if (!hasUsedFixedWinner.current && fixedWinnerTicket !== undefined && fixedWinnerTicket !== null) {
-      // نبحث أولاً عن خانة تحتوي على الرقم عبر rangeStart/rangeEnd (إن وجدت)
-      targetTicket = tickets.find((t: any) => t.rangeStart !== undefined && t.rangeStart <= fixedWinnerTicket && t.rangeEnd >= fixedWinnerTicket) || null;
-      // إذا لم نجد، نبحث بالرقم (للتوافق مع البطاقات العادية)
+    // 👈 التحقق من وجود أرقام ثابتة لم تُستخدم بعد
+    if (fixedWinnerIndex.current < fixedWinners.length) {
+      const nextFixedTicketNumber = fixedWinners[fixedWinnerIndex.current];
+
+      // البحث عن الخانة التي تحتوي على الرقم الثابت
+      targetTicket = tickets.find((t: any) =>
+        t.rangeStart !== undefined &&
+        t.rangeStart <= nextFixedTicketNumber &&
+        t.rangeEnd >= nextFixedTicketNumber
+      ) || null;
+
       if (!targetTicket) {
-        targetTicket = tickets.find((t) => t.number === fixedWinnerTicket) || null;
+        targetTicket = tickets.find((t) => t.number === nextFixedTicketNumber) || null;
       }
+
       if (targetTicket) {
-        hasUsedFixedWinner.current = true;
-        console.log("🎯 أول سحب: تثبيت الفائز على الخانة التي تحتوي على", fixedWinnerTicket);
+        fixedWinnerIndex.current++;
+        console.log(`🎯 سحب ثابت ${fixedWinnerIndex.current}: الرقم`, nextFixedTicketNumber);
       }
     }
 
-    // إذا لم نجد الرقم الثابت أو تم استخدامه، اختر عشوائياً
+    // إذا لم نجد الرقم الثابت أو لم يعد هناك أرقام ثابتة، اختر عشوائياً
     if (!targetTicket) {
       targetTicket = tickets[Math.floor(Math.random() * tickets.length)];
       console.log("🔄 سحب عشوائي:", targetTicket.number);
     }
 
-    // ===== 2. حساب الزاوية المستهدفة (المؤشر في الأعلى) =====
+    // ===== حساب الزاوية =====
     const targetIndex = tickets.indexOf(targetTicket);
     const numSlices = tickets.length;
     const sliceAngle = (2 * Math.PI) / numSlices;
-    
-    // زاوية منتصف الشريحة المستهدفة
     const targetSliceAngle = targetIndex * sliceAngle + sliceAngle / 2;
-    
-    // المؤشر في الأعلى (الزاوية -PI/2)
     const pointerAngle = -Math.PI / 2;
-    
-    // الزاوية التي تجعل الشريحة في مواجهة المؤشر
     let targetRotation = pointerAngle - targetSliceAngle;
-    
-    // نضبط لتكون في المدى [0, 2PI)
     targetRotation = ((targetRotation % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
 
-    // ===== 3. إضافة 20 لفة سريعة =====
     const extraSpins = 20;
     const totalRot = rotation + extraSpins * (2 * Math.PI) + (targetRotation - rotation % (2 * Math.PI));
 
-    // ===== 4. تشغيل الحركة =====
     const duration = 5000;
     const startTime = performance.now();
     const startRot = rotation;
@@ -174,7 +164,6 @@ export default function LuckyWheel({
       } else {
         setRotation(currentRot);
         setSpinning(false);
-        // ===== 5. إرسال الفائز (نفس الخانة التي اخترناها) =====
         onWinner(targetTicket);
       }
     };
