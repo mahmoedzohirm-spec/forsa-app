@@ -19,7 +19,8 @@ export interface Ticket {
   notes?: string;
   updated_at: string;
   user_id?: number;
-    receipt_image?: string; 
+  receipt_image?: string;
+  booking_id?: number; // ✅ جديد
 }
 
 export interface PaymentMethod {
@@ -59,17 +60,16 @@ export interface TicketCounts {
   pending: string;
   sold: string;
 }
-// ... الأنواع الموجودة ...
 
 export interface Notification {
-    id: number;
-    user_id: number;
-    title: string;
-    message: string;
-    type: 'approval' | 'rejection' | 'winner' | 'status_change' | 'draw_announcement';
-    is_read: boolean;
-    data?: any;
-    created_at: string;
+  id: number;
+  user_id: number;
+  title: string;
+  message: string;
+  type: 'approval' | 'rejection' | 'winner' | 'status_change' | 'draw_announcement';
+  is_read: boolean;
+  data?: any;
+  created_at: string;
 }
 
 export interface AppSettings {
