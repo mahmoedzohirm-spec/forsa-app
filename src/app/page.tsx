@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link"; // ✅ استيراد Link
 import { useUser } from "@/hooks/useUser";
 import { useTickets } from "@/hooks/useTickets";
 import NotificationBell from "@/components/ui/NotificationBell";
@@ -44,8 +45,7 @@ export default function HomePage() {
   const [search, setSearch] = useState("");
   const [visibleCount, setVisibleCount] = useState(300);
   const [showMyTickets, setShowMyTickets] = useState(false);
-  
-  // ===== حالة سجل الفائزين =====
+
   const [recentWinners, setRecentWinners] = useState<DrawHistory[]>([]);
 
   const ticketPrice = settings.ticket_price || "100";
@@ -167,7 +167,6 @@ export default function HomePage() {
     }
   }, []);
 
-  // ===== جلب سجل الفائزين =====
   useEffect(() => {
     if (initialized) {
       fetch("/api/admin/draw")
@@ -307,11 +306,30 @@ export default function HomePage() {
                 { id: "tickets", label: "البطاقات" },
                 { id: "prizes", label: "الجوائز" },
                 { id: "how", label: "السحوبات" },
+                { id: "winners", label: "🏆 الفائزون" }, // ✅ إضافة رابط الفائزين
               ].map((link) => (
                 <button
                   key={link.id}
-                  onClick={() => { setActiveSection(link.id); setIsMobileMenuOpen(false); }}
-                  style={{ padding: "8px 16px", borderRadius: "8px", border: "none", cursor: "pointer", fontSize: "14px", fontWeight: "600", fontFamily: "Cairo, Inter, sans-serif", transition: "all 0.2s", background: activeSection === link.id ? "rgba(124,58,237,0.2)" : "transparent", color: activeSection === link.id ? "#f59e0b" : "#9ca3af" }}
+                  onClick={() => {
+                    if (link.id === "winners") {
+                      window.location.href = "/winners";
+                    } else {
+                      setActiveSection(link.id);
+                      setIsMobileMenuOpen(false);
+                    }
+                  }}
+                  style={{
+                    padding: "8px 16px",
+                    borderRadius: "8px",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    fontFamily: "Cairo, Inter, sans-serif",
+                    transition: "all 0.2s",
+                    background: activeSection === link.id ? "rgba(124,58,237,0.2)" : "transparent",
+                    color: activeSection === link.id ? "#f59e0b" : "#9ca3af",
+                  }}
                   className="desktop-nav-link"
                 >
                   {link.label}
@@ -374,10 +392,18 @@ export default function HomePage() {
             { id: "tickets", label: "البطاقات" },
             { id: "prizes", label: "الجوائز" },
             { id: "how", label: "السحوبات" },
+            { id: "winners", label: "🏆 الفائزون" }, // ✅ إضافة رابط الفائزين
           ].map((link) => (
             <button
               key={link.id}
-              onClick={() => { setActiveSection(link.id); setIsMobileMenuOpen(false); }}
+              onClick={() => {
+                if (link.id === "winners") {
+                  window.location.href = "/winners";
+                } else {
+                  setActiveSection(link.id);
+                }
+                setIsMobileMenuOpen(false);
+              }}
               style={{
                 display: "block",
                 width: "100%",
@@ -486,7 +512,7 @@ export default function HomePage() {
         />
       )}
 
-      {/* ===== عرض سجل الفائزين ===== */}
+      {/* عرض سجل الفائزين في الصفحة الرئيسية */}
       {(activeSection === "home" || activeSection === "how") && (
         <HistorySection winners={recentWinners} />
       )}
