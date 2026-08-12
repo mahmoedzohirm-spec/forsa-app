@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Ticket, User, DrawTicket, DrawHistory, Prize, AppSettings, TicketCounts } from "@/types";
 import { Confetti } from "@/components/ui/Confetti";
 import LuckyWheel from "@/components/wheel/LuckyWheel";
+import React from "react";
 import { PaymentMethodsTab } from "@/components/dashboard/PaymentMethodsTab";
 import DrawScheduleTab from "@/components/dashboard/DrawScheduleTab";
 import { Spinner } from "@/components/ui/Spinner";
