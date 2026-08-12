@@ -54,6 +54,15 @@ export default function AdminDashboard({
   const [rangeNumbers, setRangeNumbers] = useState<number[]>([]);
   const [winningTicket, setWinningTicket] = useState<DrawTicket | null>(null);
 
+  // ===== إضافة فائز يدوي =====
+  const [manualWinner, setManualWinner] = useState({
+    ticketNumber: "",
+    winnerName: "",
+    prize: "",
+    winnerPhone: "",
+  });
+  const [isAddingWinner, setIsAddingWinner] = useState(false);
+
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(""), 3600);
@@ -298,6 +307,42 @@ export default function AdminDashboard({
     }
   };
 
+  // ===== دالة إضافة فائز يدوي =====
+  const handleAddManualWinner = async () => {
+    const { ticketNumber, winnerName, prize, winnerPhone } = manualWinner;
+    
+    if (!ticketNumber || !winnerName || !prize) {
+      showToast("⚠️ يرجى تعبئة جميع الحقول المطلوبة (رقم البطاقة، الاسم، الجائزة)");
+      return;
+    }
+
+    setIsAddingWinner(true);
+    try {
+      const res = await fetch("/api/admin/draw", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ticketNumber: parseInt(ticketNumber),
+          winnerName,
+          winnerPhone,
+          prize,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`✅ تم إضافة الفائز #${ticketNumber} بنجاح`);
+        setManualWinner({ ticketNumber: "", winnerName: "", prize: "", winnerPhone: "" });
+        loadAll();
+      } else {
+        showToast("⚠️ فشل الإضافة: " + data.error);
+      }
+    } catch {
+      showToast("⚠️ خطأ في الاتصال");
+    } finally {
+      setIsAddingWinner(false);
+    }
+  };
+
   // ===== دالة لعرض لوحة الأرقام ثم نافذة الفائز =====
   const handleRangeWinner = (ticket: DrawTicket, rangeStart: number, rangeEnd: number) => {
     const numbers = Array.from({ length: rangeEnd - rangeStart + 1 }, (_, i) => rangeStart + i);
@@ -510,6 +555,7 @@ export default function AdminDashboard({
     { id: "payment-methods", icon: "💳", label: "طرق الدفع" },
     { id: "draw-schedule", icon: "📅", label: "موعد السحب" },
     { id: "announce", icon: "📢", label: "إعلانات" },
+    { id: "add-winner", icon: "➕", label: "إضافة فائز" },
     { id: "settings", icon: "⚙️", label: "الإعدادات" },
   ];
 
@@ -1949,6 +1995,114 @@ export default function AdminDashboard({
                 {sending ? "جارٍ الإرسال..." : "📨 إرسال إعلان للجميع"}
               </button>
             </div>
+          </div>
+        )}
+
+        {activeTab === "add-winner" && (
+          <div>
+            <h1 style={{ fontSize: "26px", fontWeight: "900", color: "#f59e0b", marginBottom: "28px" }}>
+              ➕ إضافة فائز يدوي
+            </h1>
+            <div style={cardStyle}>
+              <p style={{ color: "#9ca3af", fontSize: "14px", marginBottom: "20px" }}>
+                أضف فائزاً جديداً إلى سجل السحوبات. هذا مفيد لعرض فائزين سابقين أو تجريبيين.
+              </p>
+              
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                <div>
+                  <label style={{ color: "#c4b5fd", fontSize: "13px", display: "block", marginBottom: "6px" }}>
+                    رقم البطاقة *
+                  </label>
+                  <input
+                    type="number"
+                    style={inputStyle}
+                    placeholder="مثال: 1428"
+                    value={manualWinner.ticketNumber}
+                    onChange={(e) => setManualWinner({ ...manualWinner, ticketNumber: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label style={{ color: "#c4b5fd", fontSize: "13px", display: "block", marginBottom: "6px" }}>
+                    اسم الفائز *
+                  </label>
+                  <input
+                    type="text"
+                    style={inputStyle}
+                    placeholder="مثال: أحمد محمد"
+                    value={manualWinner.winnerName}
+                    onChange={(e) => setManualWinner({ ...manualWinner, winnerName: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label style={{ color: "#c4b5fd", fontSize: "13px", display: "block", marginBottom: "6px" }}>
+                    الجائزة *
+                  </label>
+                  <input
+                    type="text"
+                    style={inputStyle}
+                    placeholder="مثال: الجائزة الكبرى"
+                    value={manualWinner.prize}
+                    onChange={(e) => setManualWinner({ ...manualWinner, prize: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label style={{ color: "#c4b5fd", fontSize: "13px", display: "block", marginBottom: "6px" }}>
+                    رقم الجوال (اختياري)
+                  </label>
+                  <input
+                    type="tel"
+                    style={inputStyle}
+                    placeholder="مثال: 0591234567"
+                    value={manualWinner.winnerPhone}
+                    onChange={(e) => setManualWinner({ ...manualWinner, winnerPhone: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={handleAddManualWinner}
+                disabled={isAddingWinner}
+                className="btn-gold"
+                style={{
+                  marginTop: "20px",
+                  padding: "14px 32px",
+                  borderRadius: "10px",
+                  fontSize: "16px",
+                  fontWeight: "700",
+                  fontFamily: "Cairo, Inter, sans-serif",
+                  opacity: isAddingWinner ? 0.7 : 1,
+                  cursor: isAddingWinner ? "not-allowed" : "pointer",
+                }}
+              >
+                {isAddingWinner ? "جارٍ الإضافة..." : "➕ إضافة الفائز"}
+              </button>
+            </div>
+
+            {/* عرض آخر الفائزين المضافين */}
+            {drawHistory.length > 0 && (
+              <div style={{ ...cardStyle, marginTop: "20px" }}>
+                <h3 style={{ color: "#c4b5fd", fontWeight: "700", marginBottom: "16px" }}>
+                  📋 آخر الفائزين المضافين
+                </h3>
+                <div style={{ maxHeight: "300px", overflowY: "auto" }}>
+                  {drawHistory.slice(0, 10).map((h) => (
+                    <div
+                      key={h.id}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        padding: "10px",
+                        borderBottom: "1px solid rgba(124,58,237,0.1)",
+                      }}
+                    >
+                      <span style={{ color: "#fbbf24", fontWeight: "700" }}>#{h.ticket_number}</span>
+                      <span style={{ color: "#fff" }}>{h.winner_name}</span>
+                      <span style={{ color: "#f59e0b" }}>{h.prize}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
