@@ -1217,7 +1217,7 @@ export default function AdminDashboard({
                 };
 
                 // ===== المصفوفة النهائية للعرض =====
-                const allItems: JSX.Element[] = [];
+               const allItems: React.ReactNode[] = [];
                 groups.forEach((g) => allItems.push(renderGroup(g)));
                 singles.forEach((t) => allItems.push(renderSingle(t)));
 
