@@ -12,9 +12,11 @@ export async function GET(req: NextRequest) {
 
     const client = await pool.connect();
     try {
-    let query = `SELECT id, number, status, user_id, user_name, user_phone, contact_phone, 
-                    payment_method, notes, rejection_reason, created_at, updated_at 
-             FROM tickets`;      const params: (string | number)[] = [];
+      // ✅ تمت إضافة booking_id إلى الاستعلام
+      let query = `SELECT id, number, status, user_id, user_name, user_phone, contact_phone, 
+                      payment_method, notes, rejection_reason, created_at, updated_at, booking_id
+               FROM tickets`;
+      const params: (string | number)[] = [];
       const conditions: string[] = [];
 
       if (status && status !== "all") {
