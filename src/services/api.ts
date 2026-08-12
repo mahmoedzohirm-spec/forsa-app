@@ -1,5 +1,5 @@
 export const api = {
-  getTickets: (limit = 3000) =>
+  getTickets: (limit = 5000) =>
     fetch(`/api/tickets?limit=${limit}`).then((r) => r.json()),
 
   bookTicket: (data: any) =>
