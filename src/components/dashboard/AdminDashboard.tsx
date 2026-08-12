@@ -1236,7 +1236,7 @@ export default function AdminDashboard({
                             handleRangeWinner(realTicket, rangeStart, rangeEnd);
                           }
                         }}
-                        fixedWinnerTicket={1428}
+                        fixedWinnerTickets={[1428, 4261]} // ✅ الجائزة الأولى 1428، الجائزة الثانية 4261
                       />
                     );
                   })()
