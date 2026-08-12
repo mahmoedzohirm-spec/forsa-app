@@ -19,6 +19,8 @@ import { TicketsSection } from "@/components/home/TicketsSection";
 import { Footer } from "@/components/home/Footer";
 import { TrophyIcon } from "@/components/ui/Icons";
 import { requestPushPermission, onPushMessage } from "@/lib/firebase";
+import { DrawHistory } from "@/types";
+import { HistorySection } from "@/components/home/HistorySection";
 
 const AdminDashboard = dynamic(
   () => import("@/components/dashboard/AdminDashboard"),
@@ -42,6 +44,9 @@ export default function HomePage() {
   const [search, setSearch] = useState("");
   const [visibleCount, setVisibleCount] = useState(300);
   const [showMyTickets, setShowMyTickets] = useState(false);
+  
+  // ===== حالة سجل الفائزين =====
+  const [recentWinners, setRecentWinners] = useState<DrawHistory[]>([]);
 
   const ticketPrice = settings.ticket_price || "100";
   const currency = settings.currency || "ريال";
@@ -161,6 +166,20 @@ export default function HomePage() {
       bootstrap();
     }
   }, []);
+
+  // ===== جلب سجل الفائزين =====
+  useEffect(() => {
+    if (initialized) {
+      fetch("/api/admin/draw")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.history) {
+            setRecentWinners(data.history.slice(0, 5));
+          }
+        })
+        .catch((err) => console.error("Error fetching draw history:", err));
+    }
+  }, [initialized]);
 
   useEffect(() => {
     if (user) {
@@ -465,6 +484,11 @@ export default function HomePage() {
           }}
           onSelectMultipleTickets={handleSelectMultipleTickets}
         />
+      )}
+
+      {/* ===== عرض سجل الفائزين ===== */}
+      {(activeSection === "home" || activeSection === "how") && (
+        <HistorySection winners={recentWinners} />
       )}
 
       {activeSection === "how" && (
