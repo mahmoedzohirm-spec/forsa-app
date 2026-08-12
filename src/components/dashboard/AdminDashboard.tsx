@@ -1036,7 +1036,11 @@ export default function AdminDashboard({
                         <div style={{ display: "flex", gap: "10px" }}>
                           {/* ✅ قبول المجموعة باستخدام handleApproveBatch */}
                           <button
-                            onClick={() => handleApproveBatch(first.booking_id)}
+                            onClick={() => {
+                              if (first.booking_id) {
+                                handleApproveBatch(first.booking_id);
+                              }
+                            }}
                             style={{
                               padding: "10px 20px",
                               background: "linear-gradient(135deg, #059669, #047857)",
@@ -1053,7 +1057,11 @@ export default function AdminDashboard({
                           </button>
                           {/* ✅ رفض المجموعة باستخدام bookingId */}
                           <button
-                            onClick={() => setRejectModal({ bookingId: first.booking_id })}
+                            onClick={() => {
+                              if (first.booking_id) {
+                                setRejectModal({ bookingId: first.booking_id });
+                              }
+                            }}
                             style={{
                               padding: "10px 20px",
                               background: "linear-gradient(135deg, #dc2626, #b91c1c)",
