@@ -19,7 +19,7 @@ interface TicketsSectionProps {
   setShowMyTickets: (show: boolean) => void;
   filteredTickets: Ticket[];
   onSelectTicket: (ticket: Ticket) => void;
-  onSelectMultipleTickets: (ticketNumbers: number[]) => void; // ✅ جديد
+  onSelectMultipleTickets: (ticketNumbers: number[]) => void;
 }
 
 export function TicketsSection({
@@ -38,7 +38,7 @@ export function TicketsSection({
   setShowMyTickets,
   filteredTickets,
   onSelectTicket,
-  onSelectMultipleTickets, // ✅ جديد
+  onSelectMultipleTickets,
 }: TicketsSectionProps) {
   const t = useTranslations('HomePage.tickets');
   const locale = useLocale();
@@ -86,26 +86,43 @@ export function TicketsSection({
     }
   };
 
+  // ===== دالة الاختيار اليدوي (إضافة/إزالة بطاقة) =====
+  const handleManualSelect = (ticketNumber: number) => {
+    setSelectedTickets((prev) => {
+      if (prev.includes(ticketNumber)) {
+        // إلغاء تحديد البطاقة
+        return prev.filter((num) => num !== ticketNumber);
+      } else {
+        // تحديد البطاقة (مع التحقق من الحد الأقصى 500)
+        if (prev.length >= 500) {
+          alert("⚠️ لا يمكنك اختيار أكثر من 500 بطاقة");
+          return prev;
+        }
+        return [...prev, ticketNumber];
+      }
+    });
+  };
+
   // ===== دالة تحديد ألوان البطاقة (تعتمد فقط على الحالة) =====
   const getTicketStyle = (ticket: Ticket) => {
     switch (ticket.status) {
       case "available":
         return {
-          background: "rgba(34, 197, 94, 0.12)", // أخضر شفاف
+          background: "rgba(34, 197, 94, 0.12)",
           border: "1.5px solid #22c55e",
           color: "#4ade80",
           fontWeight: "700",
         };
       case "pending":
         return {
-          background: "rgba(250, 204, 21, 0.18)", // 🟡 أصفر شفاف
+          background: "rgba(250, 204, 21, 0.18)",
           border: "1.5px solid #facc15",
           color: "#facc15",
           fontWeight: "700",
         };
       case "sold":
         return {
-          background: "rgba(107, 114, 128, 0.15)", // رمادي شفاف
+          background: "rgba(107, 114, 128, 0.15)",
           border: "1px solid #4b5563",
           color: "#6b7280",
           fontWeight: "400",
@@ -266,7 +283,7 @@ export function TicketsSection({
           </div>
         </div>
 
-        {/* ===== Multi-select toolbar (جديد) ===== */}
+        {/* ===== Multi-select toolbar ===== */}
         <div
           style={{
             background: "rgba(30, 20, 53, 0.6)",
@@ -404,32 +421,30 @@ export function TicketsSection({
           <>
             <div className="ticket-grid">
               {filteredTickets.slice(0, visibleCount).map((t) => {
-                // تحقق إذا كانت البطاقة مملوكة للمستخدم الحالي
                 const isUserTicket = !!(user && t.user_id === user.id);
                 const style = getTicketStyle(t);
-                // نسمح بالنقر فقط إذا كانت البطاقة متاحة أو مملوكة للمستخدم (حتى لو معلقة)
                 const isClickable = t.status === "available" || isUserTicket;
-
-                // ✅ هل البطاقة مختارة في وضع الاختيار المتعدد؟
                 const isSelected = selectedTickets.includes(t.number);
 
                 return (
                   <div
                     key={t.number}
                     onClick={() => {
+                      // ✅ وضع الاختيار المتعدد + البطاقة متاحة
+                      if (multiSelectMode && t.status === "available") {
+                        handleManualSelect(t.number);
+                        return;
+                      }
+                      // الوضع العادي (اختيار بطاقة واحدة)
                       if (isClickable && !multiSelectMode) {
                         onSelectTicket(t);
-                      } else if (multiSelectMode && t.status === "available") {
-                        // في وضع الاختيار المتعدد، لا نفتح الـ Modal بل نضيف/نزيل البطاقة من القائمة (تحديد يدوي)
-                        // لكن بما أننا نستخدم الاختيار العشوائي فقط، نعطل التحديد اليدوي هنا عشان ما يخربط مع العشوائي
-                        // يمكنك تفعيله إذا أردت اختيار يدوي أيضاً
                       }
                     }}
                     style={{
                       borderRadius: "12px",
                       padding: "12px 4px",
                       textAlign: "center",
-                      cursor: isClickable ? "pointer" : "default",
+                      cursor: (multiSelectMode && t.status === "available") || isClickable ? "pointer" : "default",
                       transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
                       ...style,
                       border: isSelected ? "2px solid #f59e0b" : style.border,
@@ -441,20 +456,18 @@ export function TicketsSection({
                       justifyContent: "center",
                     }}
                     onMouseEnter={(e) => {
-                      if (isClickable) {
+                      if (isClickable || (multiSelectMode && t.status === "available")) {
                         e.currentTarget.style.transform = "scale(1.08)";
-                        e.currentTarget.style.boxShadow =
-                          "0 8px 30px rgba(0,0,0,0.5)";
+                        e.currentTarget.style.boxShadow = "0 8px 30px rgba(0,0,0,0.5)";
                       }
                     }}
                     onMouseLeave={(e) => {
-                      if (isClickable) {
+                      if (isClickable || (multiSelectMode && t.status === "available")) {
                         e.currentTarget.style.transform = "scale(1)";
                         e.currentTarget.style.boxShadow = "none";
                       }
                     }}
                   >
-                    {/* الرقم بحجم 16px */}
                     <p
                       style={{
                         fontSize: "16px",
@@ -467,7 +480,6 @@ export function TicketsSection({
                     >
                       {t.number}
                     </p>
-                    {/* أيقونة الحالة */}
                     <div
                       style={{
                         fontSize: "10px",
