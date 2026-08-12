@@ -247,6 +247,27 @@ export default function AdminDashboard({
     }
   };
 
+  // ===== دالة مسح سجل السحوبات =====
+  const handleClearHistory = async () => {
+    if (!confirm("⚠️ هل أنت متأكد من حذف جميع سجلات السحوبات؟ هذا الإجراء لا يمكن التراجع عنه.")) {
+      return;
+    }
+    try {
+      const res = await fetch("/api/admin/draw/clear", {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast("✅ تم حذف جميع سجلات السحوبات بنجاح");
+        loadAll();
+      } else {
+        showToast("⚠️ فشل الحذف: " + data.error);
+      }
+    } catch {
+      showToast("⚠️ خطأ في الاتصال");
+    }
+  };
+
   const handleWinner = async (ticket: DrawTicket) => {
     setWinnerModal({ ticket, prize: selectedPrize });
     setConfetti(true);
@@ -800,9 +821,37 @@ export default function AdminDashboard({
               ))}
             </div>
 
+            {/* ✅ سجل السحوبات مع زر مسح الكل */}
             {drawHistory.length > 0 && (
               <div style={{ ...cardStyle, marginTop: "20px" }}>
-                <h3 style={{ color: "#c4b5fd", fontWeight: "700", marginBottom: "16px" }}>🎰 سجل السحوبات</h3>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+                  <h3 style={{ color: "#c4b5fd", fontWeight: "700", fontSize: "16px" }}>
+                    🎰 سجل السحوبات
+                  </h3>
+                  <button
+                    onClick={handleClearHistory}
+                    style={{
+                      padding: "6px 16px",
+                      background: "rgba(239, 68, 68, 0.2)",
+                      color: "#f87171",
+                      border: "1px solid rgba(239, 68, 68, 0.3)",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      fontSize: "13px",
+                      fontWeight: "600",
+                      fontFamily: "Cairo, Inter, sans-serif",
+                      transition: "all 0.2s",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = "rgba(239, 68, 68, 0.4)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = "rgba(239, 68, 68, 0.2)";
+                    }}
+                  >
+                    🗑️ مسح الكل
+                  </button>
+                </div>
                 {drawHistory.map((h) => (
                   <div
                     key={h.id}
@@ -1034,7 +1083,6 @@ export default function AdminDashboard({
                           </div>
                         </div>
                         <div style={{ display: "flex", gap: "10px" }}>
-                          {/* ✅ قبول المجموعة باستخدام handleApproveBatch */}
                           <button
                             onClick={() => {
                               if (first.booking_id) {
@@ -1055,7 +1103,6 @@ export default function AdminDashboard({
                           >
                             ✅ قبول الكل
                           </button>
-                          {/* ✅ رفض المجموعة باستخدام bookingId */}
                           <button
                             onClick={() => {
                               if (first.booking_id) {
