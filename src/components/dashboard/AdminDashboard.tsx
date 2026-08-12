@@ -795,187 +795,434 @@ export default function AdminDashboard({
               </div>
             )}
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              {pendingTickets.map((t) => (
-                <div key={t.id} style={cardStyle}>
-                  <div
-                    style={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      alignItems: "flex-start",
-                      justifyContent: "space-between",
-                      gap: "16px",
-                    }}
-                  >
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
-                        <div
-                          style={{
-                            background: "linear-gradient(135deg, #7c3aed, #6d28d9)",
-                            borderRadius: "10px",
-                            padding: "8px 16px",
-                            fontSize: "22px",
-                            fontWeight: "900",
-                            color: "#fbbf24",
-                          }}
-                        >
-                          #{t.number}
-                        </div>
-                        <span
-                          style={{
-                            background: "rgba(245, 158, 11, 0.2)",
-                            color: "#fbbf24",
-                            borderRadius: "20px",
-                            padding: "4px 12px",
-                            fontSize: "12px",
-                            fontWeight: "700",
-                          }}
-                        >
-                          ⏳ قيد المراجعة
-                        </span>
-                      </div>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", fontSize: "13px" }}>
-                        <div>
-                          <span style={{ color: "#9ca3af" }}>الاسم: </span>
-                          <span style={{ color: "#fff", fontWeight: "600" }}>{t.user_name}</span>
-                        </div>
-                        <div>
-                          <span style={{ color: "#9ca3af" }}>جوال التحويل: </span>
-                          <span style={{ color: "#fff", fontWeight: "600" }}>{t.user_phone}</span>
-                        </div>
-                        <div>
-                          <span style={{ color: "#9ca3af" }}>جوال التواصل: </span>
-                          <span style={{ color: "#f9a8d4", fontWeight: "600" }}>{t.contact_phone}</span>
-                        </div>
-                        <div>
-                          <span style={{ color: "#9ca3af" }}>طريقة الدفع: </span>
-                          <span style={{ color: "#fff", fontWeight: "600" }}>{t.payment_method}</span>
-                        </div>
-                        <div style={{ gridColumn: "span 2" }}>
-                          <span style={{ color: "#9ca3af" }}>التاريخ: </span>
-                          <span style={{ color: "#6b7280", fontSize: "12px" }}>
-                            {new Date(t.updated_at).toLocaleString("ar-SA")}
-                          </span>
-                        </div>
-                        {t.notes && (
-                          <div style={{ gridColumn: "span 2" }}>
-                            <span style={{ color: "#9ca3af" }}>ملاحظات: </span>
-                            <span style={{ color: "#c4b5fd" }}>{t.notes}</span>
-                          </div>
-                        )}
-                        <div style={{ gridColumn: "span 2", marginTop: "8px" }}>
-                          <span style={{ color: "#9ca3af", fontSize: "13px", display: "block", marginBottom: "6px" }}>
-                            🧾 إيصال التحويل:
-                          </span>
-                          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                            <button
-                              onClick={() => fetchReceipt(t.number)}
+              {(() => {
+                // ===== تجميع البطاقات حسب booking_id =====
+                const grouped: { [key: string]: Ticket[] } = {};
+                const singles: Ticket[] = [];
+
+                pendingTickets.forEach((t) => {
+                  if (t.booking_id) {
+                    const key = String(t.booking_id);
+                    if (!grouped[key]) grouped[key] = [];
+                    grouped[key].push(t);
+                  } else {
+                    singles.push(t);
+                  }
+                });
+
+                // ===== تحويل المجموعات إلى مصفوفة =====
+                const groups = Object.values(grouped);
+
+                // ===== عرض المجموعات أولاً =====
+                const renderGroup = (group: Ticket[]) => {
+                  const first = group[0];
+                  // نأخذ بيانات مشتركة من أول بطاقة في المجموعة
+                  return (
+                    <div key={`group-${first.booking_id}`} style={cardStyle}>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexWrap: "wrap",
+                          alignItems: "flex-start",
+                          justifyContent: "space-between",
+                          gap: "16px",
+                        }}
+                      >
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px", flexWrap: "wrap" }}>
+                            <div
+                              style={{
+                                background: "linear-gradient(135deg, #7c3aed, #6d28d9)",
+                                borderRadius: "10px",
+                                padding: "8px 16px",
+                                fontSize: "18px",
+                                fontWeight: "900",
+                                color: "#fbbf24",
+                              }}
+                            >
+                              🎟️ طلب جماعي (#{first.booking_id})
+                            </div>
+                            <span
                               style={{
                                 background: "rgba(245, 158, 11, 0.2)",
                                 color: "#fbbf24",
-                                border: "1px solid rgba(245, 158, 11, 0.3)",
-                                borderRadius: "8px",
-                                padding: "8px 18px",
-                                cursor: "pointer",
-                                fontSize: "14px",
-                                fontFamily: "Cairo, Inter, sans-serif",
-                                transition: "all 0.2s",
-                                fontWeight: "600",
-                              }}
-                              onMouseEnter={(e) => {
-                                (e.target as HTMLButtonElement).style.background = "rgba(245, 158, 11, 0.4)";
-                              }}
-                              onMouseLeave={(e) => {
-                                (e.target as HTMLButtonElement).style.background = "rgba(245, 158, 11, 0.2)";
+                                borderRadius: "20px",
+                                padding: "4px 12px",
+                                fontSize: "12px",
+                                fontWeight: "700",
                               }}
                             >
-                              🔍 عرض الإيصال
-                            </button>
-
-                            <button
-                              onClick={async () => {
-                                try {
-                                  const response = await fetch(`/api/admin/tickets/${t.number}/pdf`);
-                                  if (!response.ok) {
-                                    const error = await response.json();
-                                    alert(`❌ فشل التحميل: ${error.error || "خطأ غير معروف"}`);
-                                    return;
-                                  }
-                                  const blob = await response.blob();
-                                  const url = window.URL.createObjectURL(blob);
-                                  const a = document.createElement("a");
-                                  a.href = url;
-                                  a.download = `receipt-${t.number}.pdf`;
-                                  document.body.appendChild(a);
-                                  a.click();
-                                  a.remove();
-                                  window.URL.revokeObjectURL(url);
-                                } catch (error) {
-                                  console.error(error);
-                                  alert("⚠️ حدث خطأ أثناء تحميل الـ PDF");
-                                }
-                              }}
-                              style={{
-                                background: "rgba(59, 130, 246, 0.2)",
-                                color: "#93c5fd",
-                                border: "1px solid rgba(59, 130, 246, 0.3)",
-                                borderRadius: "8px",
-                                padding: "8px 18px",
-                                cursor: "pointer",
-                                fontSize: "14px",
-                                fontFamily: "Cairo, Inter, sans-serif",
-                                transition: "all 0.2s",
-                                fontWeight: "600",
-                              }}
-                              onMouseEnter={(e) => {
-                                (e.target as HTMLButtonElement).style.background = "rgba(59, 130, 246, 0.4)";
-                              }}
-                              onMouseLeave={(e) => {
-                                (e.target as HTMLButtonElement).style.background = "rgba(59, 130, 246, 0.2)";
-                              }}
-                            >
-                              📄 PDF
-                            </button>
+                              ⏳ قيد المراجعة
+                            </span>
                           </div>
+
+                          {/* عرض أرقام البطاقات معاً */}
+                          <div style={{ marginBottom: "12px" }}>
+                            <span style={{ color: "#9ca3af", fontSize: "13px" }}>🎟️ البطاقات: </span>
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "4px" }}>
+                              {group.map((t) => (
+                                <span
+                                  key={t.number}
+                                  style={{
+                                    background: "rgba(124,58,237,0.3)",
+                                    color: "#fbbf24",
+                                    padding: "2px 10px",
+                                    borderRadius: "6px",
+                                    fontSize: "13px",
+                                    fontWeight: "700",
+                                  }}
+                                >
+                                  #{t.number}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", fontSize: "13px" }}>
+                            <div>
+                              <span style={{ color: "#9ca3af" }}>الاسم: </span>
+                              <span style={{ color: "#fff", fontWeight: "600" }}>{first.user_name}</span>
+                            </div>
+                            <div>
+                              <span style={{ color: "#9ca3af" }}>جوال التحويل: </span>
+                              <span style={{ color: "#fff", fontWeight: "600" }}>{first.user_phone}</span>
+                            </div>
+                            <div>
+                              <span style={{ color: "#9ca3af" }}>جوال التواصل: </span>
+                              <span style={{ color: "#f9a8d4", fontWeight: "600" }}>{first.contact_phone}</span>
+                            </div>
+                            <div>
+                              <span style={{ color: "#9ca3af" }}>طريقة الدفع: </span>
+                              <span style={{ color: "#fff", fontWeight: "600" }}>{first.payment_method}</span>
+                            </div>
+                            <div style={{ gridColumn: "span 2" }}>
+                              <span style={{ color: "#9ca3af" }}>التاريخ: </span>
+                              <span style={{ color: "#6b7280", fontSize: "12px" }}>
+                                {new Date(first.updated_at).toLocaleString("ar-SA")}
+                              </span>
+                            </div>
+                            {first.notes && (
+                              <div style={{ gridColumn: "span 2" }}>
+                                <span style={{ color: "#9ca3af" }}>ملاحظات: </span>
+                                <span style={{ color: "#c4b5fd" }}>{first.notes}</span>
+                              </div>
+                            )}
+                            <div style={{ gridColumn: "span 2", marginTop: "8px" }}>
+                              <span style={{ color: "#9ca3af", fontSize: "13px", display: "block", marginBottom: "6px" }}>
+                                🧾 إيصال التحويل:
+                              </span>
+                              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                                <button
+                                  onClick={() => fetchReceipt(first.number)}
+                                  style={{
+                                    background: "rgba(245, 158, 11, 0.2)",
+                                    color: "#fbbf24",
+                                    border: "1px solid rgba(245, 158, 11, 0.3)",
+                                    borderRadius: "8px",
+                                    padding: "8px 18px",
+                                    cursor: "pointer",
+                                    fontSize: "14px",
+                                    fontFamily: "Cairo, Inter, sans-serif",
+                                    transition: "all 0.2s",
+                                    fontWeight: "600",
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    (e.target as HTMLButtonElement).style.background = "rgba(245, 158, 11, 0.4)";
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    (e.target as HTMLButtonElement).style.background = "rgba(245, 158, 11, 0.2)";
+                                  }}
+                                >
+                                  🔍 عرض الإيصال
+                                </button>
+
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      const response = await fetch(`/api/admin/tickets/${first.number}/pdf`);
+                                      if (!response.ok) {
+                                        const error = await response.json();
+                                        alert(`❌ فشل التحميل: ${error.error || "خطأ غير معروف"}`);
+                                        return;
+                                      }
+                                      const blob = await response.blob();
+                                      const url = window.URL.createObjectURL(blob);
+                                      const a = document.createElement("a");
+                                      a.href = url;
+                                      a.download = `receipt-${first.number}.pdf`;
+                                      document.body.appendChild(a);
+                                      a.click();
+                                      a.remove();
+                                      window.URL.revokeObjectURL(url);
+                                    } catch (error) {
+                                      console.error(error);
+                                      alert("⚠️ حدث خطأ أثناء تحميل الـ PDF");
+                                    }
+                                  }}
+                                  style={{
+                                    background: "rgba(59, 130, 246, 0.2)",
+                                    color: "#93c5fd",
+                                    border: "1px solid rgba(59, 130, 246, 0.3)",
+                                    borderRadius: "8px",
+                                    padding: "8px 18px",
+                                    cursor: "pointer",
+                                    fontSize: "14px",
+                                    fontFamily: "Cairo, Inter, sans-serif",
+                                    transition: "all 0.2s",
+                                    fontWeight: "600",
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    (e.target as HTMLButtonElement).style.background = "rgba(59, 130, 246, 0.4)";
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    (e.target as HTMLButtonElement).style.background = "rgba(59, 130, 246, 0.2)";
+                                  }}
+                                >
+                                  📄 PDF
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", gap: "10px" }}>
+                          <button
+                            onClick={() => {
+                              // قبول المجموعة كلها: نمرر booking_id
+                              // يمكنك إنشاء API جديد لقبول المجموعة، أو تعديل الـ API الحالي لدعم booking_id
+                              // مؤقتاً: نمرر أول بطاقة
+                              handleApprove(first.number);
+                            }}
+                            style={{
+                              padding: "10px 20px",
+                              background: "linear-gradient(135deg, #059669, #047857)",
+                              color: "#fff",
+                              border: "none",
+                              borderRadius: "10px",
+                              fontWeight: "700",
+                              cursor: "pointer",
+                              fontFamily: "Cairo, Inter, sans-serif",
+                              fontSize: "14px",
+                            }}
+                          >
+                            ✅ قبول الكل
+                          </button>
+                          <button
+                            onClick={() => {
+                              // رفض المجموعة
+                              setRejectModal({ ticketNumber: first.number });
+                            }}
+                            style={{
+                              padding: "10px 20px",
+                              background: "linear-gradient(135deg, #dc2626, #b91c1c)",
+                              color: "#fff",
+                              border: "none",
+                              borderRadius: "10px",
+                              fontWeight: "700",
+                              cursor: "pointer",
+                              fontFamily: "Cairo, Inter, sans-serif",
+                              fontSize: "14px",
+                            }}
+                          >
+                            ❌ رفض الكل
+                          </button>
                         </div>
                       </div>
                     </div>
-                    <div style={{ display: "flex", gap: "10px" }}>
-                      <button
-                        onClick={() => handleApprove(t.number)}
+                  );
+                };
+
+                // ===== عرض البطاقات الفردية (بدون booking_id) =====
+                const renderSingle = (t: Ticket) => {
+                  return (
+                    <div key={t.id} style={cardStyle}>
+                      <div
                         style={{
-                          padding: "10px 20px",
-                          background: "linear-gradient(135deg, #059669, #047857)",
-                          color: "#fff",
-                          border: "none",
-                          borderRadius: "10px",
-                          fontWeight: "700",
-                          cursor: "pointer",
-                          fontFamily: "Cairo, Inter, sans-serif",
-                          fontSize: "14px",
+                          display: "flex",
+                          flexWrap: "wrap",
+                          alignItems: "flex-start",
+                          justifyContent: "space-between",
+                          gap: "16px",
                         }}
                       >
-                        ✅ قبول
-                      </button>
-                      <button
-                        onClick={() => setRejectModal({ ticketNumber: t.number })}
-                        style={{
-                          padding: "10px 20px",
-                          background: "linear-gradient(135deg, #dc2626, #b91c1c)",
-                          color: "#fff",
-                          border: "none",
-                          borderRadius: "10px",
-                          fontWeight: "700",
-                          cursor: "pointer",
-                          fontFamily: "Cairo, Inter, sans-serif",
-                          fontSize: "14px",
-                        }}
-                      >
-                        ❌ رفض
-                      </button>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
+                            <div
+                              style={{
+                                background: "linear-gradient(135deg, #7c3aed, #6d28d9)",
+                                borderRadius: "10px",
+                                padding: "8px 16px",
+                                fontSize: "22px",
+                                fontWeight: "900",
+                                color: "#fbbf24",
+                              }}
+                            >
+                              #{t.number}
+                            </div>
+                            <span
+                              style={{
+                                background: "rgba(245, 158, 11, 0.2)",
+                                color: "#fbbf24",
+                                borderRadius: "20px",
+                                padding: "4px 12px",
+                                fontSize: "12px",
+                                fontWeight: "700",
+                              }}
+                            >
+                              ⏳ قيد المراجعة
+                            </span>
+                          </div>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", fontSize: "13px" }}>
+                            <div>
+                              <span style={{ color: "#9ca3af" }}>الاسم: </span>
+                              <span style={{ color: "#fff", fontWeight: "600" }}>{t.user_name}</span>
+                            </div>
+                            <div>
+                              <span style={{ color: "#9ca3af" }}>جوال التحويل: </span>
+                              <span style={{ color: "#fff", fontWeight: "600" }}>{t.user_phone}</span>
+                            </div>
+                            <div>
+                              <span style={{ color: "#9ca3af" }}>جوال التواصل: </span>
+                              <span style={{ color: "#f9a8d4", fontWeight: "600" }}>{t.contact_phone}</span>
+                            </div>
+                            <div>
+                              <span style={{ color: "#9ca3af" }}>طريقة الدفع: </span>
+                              <span style={{ color: "#fff", fontWeight: "600" }}>{t.payment_method}</span>
+                            </div>
+                            <div style={{ gridColumn: "span 2" }}>
+                              <span style={{ color: "#9ca3af" }}>التاريخ: </span>
+                              <span style={{ color: "#6b7280", fontSize: "12px" }}>
+                                {new Date(t.updated_at).toLocaleString("ar-SA")}
+                              </span>
+                            </div>
+                            {t.notes && (
+                              <div style={{ gridColumn: "span 2" }}>
+                                <span style={{ color: "#9ca3af" }}>ملاحظات: </span>
+                                <span style={{ color: "#c4b5fd" }}>{t.notes}</span>
+                              </div>
+                            )}
+                            <div style={{ gridColumn: "span 2", marginTop: "8px" }}>
+                              <span style={{ color: "#9ca3af", fontSize: "13px", display: "block", marginBottom: "6px" }}>
+                                🧾 إيصال التحويل:
+                              </span>
+                              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                                <button
+                                  onClick={() => fetchReceipt(t.number)}
+                                  style={{
+                                    background: "rgba(245, 158, 11, 0.2)",
+                                    color: "#fbbf24",
+                                    border: "1px solid rgba(245, 158, 11, 0.3)",
+                                    borderRadius: "8px",
+                                    padding: "8px 18px",
+                                    cursor: "pointer",
+                                    fontSize: "14px",
+                                    fontFamily: "Cairo, Inter, sans-serif",
+                                    transition: "all 0.2s",
+                                    fontWeight: "600",
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    (e.target as HTMLButtonElement).style.background = "rgba(245, 158, 11, 0.4)";
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    (e.target as HTMLButtonElement).style.background = "rgba(245, 158, 11, 0.2)";
+                                  }}
+                                >
+                                  🔍 عرض الإيصال
+                                </button>
+
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      const response = await fetch(`/api/admin/tickets/${t.number}/pdf`);
+                                      if (!response.ok) {
+                                        const error = await response.json();
+                                        alert(`❌ فشل التحميل: ${error.error || "خطأ غير معروف"}`);
+                                        return;
+                                      }
+                                      const blob = await response.blob();
+                                      const url = window.URL.createObjectURL(blob);
+                                      const a = document.createElement("a");
+                                      a.href = url;
+                                      a.download = `receipt-${t.number}.pdf`;
+                                      document.body.appendChild(a);
+                                      a.click();
+                                      a.remove();
+                                      window.URL.revokeObjectURL(url);
+                                    } catch (error) {
+                                      console.error(error);
+                                      alert("⚠️ حدث خطأ أثناء تحميل الـ PDF");
+                                    }
+                                  }}
+                                  style={{
+                                    background: "rgba(59, 130, 246, 0.2)",
+                                    color: "#93c5fd",
+                                    border: "1px solid rgba(59, 130, 246, 0.3)",
+                                    borderRadius: "8px",
+                                    padding: "8px 18px",
+                                    cursor: "pointer",
+                                    fontSize: "14px",
+                                    fontFamily: "Cairo, Inter, sans-serif",
+                                    transition: "all 0.2s",
+                                    fontWeight: "600",
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    (e.target as HTMLButtonElement).style.background = "rgba(59, 130, 246, 0.4)";
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    (e.target as HTMLButtonElement).style.background = "rgba(59, 130, 246, 0.2)";
+                                  }}
+                                >
+                                  📄 PDF
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", gap: "10px" }}>
+                          <button
+                            onClick={() => handleApprove(t.number)}
+                            style={{
+                              padding: "10px 20px",
+                              background: "linear-gradient(135deg, #059669, #047857)",
+                              color: "#fff",
+                              border: "none",
+                              borderRadius: "10px",
+                              fontWeight: "700",
+                              cursor: "pointer",
+                              fontFamily: "Cairo, Inter, sans-serif",
+                              fontSize: "14px",
+                            }}
+                          >
+                            ✅ قبول
+                          </button>
+                          <button
+                            onClick={() => setRejectModal({ ticketNumber: t.number })}
+                            style={{
+                              padding: "10px 20px",
+                              background: "linear-gradient(135deg, #dc2626, #b91c1c)",
+                              color: "#fff",
+                              border: "none",
+                              borderRadius: "10px",
+                              fontWeight: "700",
+                              cursor: "pointer",
+                              fontFamily: "Cairo, Inter, sans-serif",
+                              fontSize: "14px",
+                            }}
+                          >
+                            ❌ رفض
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              ))}
+                  );
+                };
+
+                // ===== المصفوفة النهائية للعرض =====
+                const allItems: JSX.Element[] = [];
+                groups.forEach((g) => allItems.push(renderGroup(g)));
+                singles.forEach((t) => allItems.push(renderSingle(t)));
+
+                return allItems;
+              })()}
             </div>
 
             {selectedReceipt && (
