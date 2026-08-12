@@ -56,35 +56,7 @@ export function TicketsSection({
 
   // ===== حالة الحجز المتعدد =====
   const [multiSelectMode, setMultiSelectMode] = useState(false);
-  const [selectedCount, setSelectedCount] = useState(1);
   const [selectedTickets, setSelectedTickets] = useState<number[]>([]);
-  const [isLoadingRandom, setIsLoadingRandom] = useState(false);
-
-  // ===== دالة اختيار عشوائي =====
-  const handleRandomSelect = async () => {
-    if (selectedCount < 1 || selectedCount > 500) {
-      alert("⚠️ يرجى اختيار عدد بين 1 و 500");
-      return;
-    }
-    setIsLoadingRandom(true);
-    try {
-      const res = await fetch("/api/tickets/random", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ count: selectedCount }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setSelectedTickets(data.tickets);
-      } else {
-        alert("⚠️ " + data.error);
-      }
-    } catch {
-      alert("⚠️ حدث خطأ أثناء اختيار البطاقات");
-    } finally {
-      setIsLoadingRandom(false);
-    }
-  };
 
   // ===== دالة الاختيار اليدوي (إضافة/إزالة بطاقة) =====
   const handleManualSelect = (ticketNumber: number) => {
@@ -283,7 +255,7 @@ export function TicketsSection({
           </div>
         </div>
 
-        {/* ===== Multi-select toolbar ===== */}
+        {/* ===== Multi-select toolbar (معدل) ===== */}
         <div
           style={{
             background: "rgba(30, 20, 53, 0.6)",
@@ -304,7 +276,6 @@ export function TicketsSection({
                 setMultiSelectMode(!multiSelectMode);
                 if (multiSelectMode) {
                   setSelectedTickets([]);
-                  setSelectedCount(1);
                 }
               }}
               className={multiSelectMode ? "btn-gold" : "btn-purple"}
@@ -326,45 +297,12 @@ export function TicketsSection({
             </button>
 
             {multiSelectMode && (
-              <>
-                <input
-                  type="number"
-                  min="1"
-                  max="500"
-                  value={selectedCount}
-                  onChange={(e) => setSelectedCount(parseInt(e.target.value) || 1)}
-                  style={{
-                    width: "80px",
-                    padding: "8px 12px",
-                    background: "rgba(15, 10, 28, 0.8)",
-                    border: "1px solid rgba(124, 58, 237, 0.3)",
-                    borderRadius: "10px",
-                    color: "#fff",
-                    fontSize: "14px",
-                    fontFamily: "Cairo, Inter, sans-serif",
-                  }}
-                />
-                <button
-                  onClick={handleRandomSelect}
-                  disabled={isLoadingRandom}
-                  className="btn-gold"
-                  style={{
-                    padding: "8px 20px",
-                    borderRadius: "10px",
-                    fontSize: "14px",
-                    fontWeight: "700",
-                    fontFamily: "Cairo, Inter, sans-serif",
-                    border: "none",
-                    cursor: isLoadingRandom ? "not-allowed" : "pointer",
-                    background: isLoadingRandom
-                      ? "rgba(124, 58, 237, 0.3)"
-                      : "linear-gradient(135deg, #f59e0b, #d97706)",
-                    color: isLoadingRandom ? "#6b7280" : "#1a0a3c",
-                  }}
-                >
-                  {isLoadingRandom ? "جارٍ..." : "🎲 اختر عشوائياً"}
-                </button>
-              </>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#c4b5fd", fontSize: "14px" }}>
+                <span>👆 اضغط على أي بطاقة متاحة لتحديدها أو إلغائها</span>
+                <span style={{ color: "#fbbf24", fontWeight: "700" }}>
+                  ({selectedTickets.length} / 500)
+                </span>
+              </div>
             )}
           </div>
 
