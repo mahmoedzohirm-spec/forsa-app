@@ -221,6 +221,16 @@ export default function HomePage() {
   const displayTickets = search ? filteredTickets : filteredTickets.slice(0, visibleCount);
   const userTicketCount = user ? tickets.filter((t) => t.user_id === user.id).length : 0;
 
+  // ===== دالة لاختيار بطاقات متعددة =====
+  const handleSelectMultipleTickets = (ticketNumbers: number[]) => {
+    if (!user) {
+      setShowAuth(true);
+      return;
+    }
+    // فتح الـ Modal مع بيانات متعددة
+    setSelectedTicket({ multiple: true, numbers: ticketNumbers });
+  };
+
   if (!initialized || settingsLoading) {
     return (
       <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #0f0a1c 0%, #080510 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: "20px" }}>
@@ -453,6 +463,7 @@ export default function HomePage() {
               setSelectedTicket(t);
             }
           }}
+          onSelectMultipleTickets={handleSelectMultipleTickets}
         />
       )}
 
