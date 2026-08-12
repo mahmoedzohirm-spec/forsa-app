@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { Ticket, TicketCounts, User } from "@/types";
 import { SkeletonTicketGrid } from "@/components/ui/Skeleton";
