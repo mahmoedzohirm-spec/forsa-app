@@ -3,20 +3,17 @@ import { pool } from "@/db";
 
 export async function POST(req: NextRequest) {
   try {
-    // 1. استقبال عدد البطاقات المطلوبة
     const { count } = await req.json();
 
-    // 2. التحقق من العدد (بين 1 و 100)
-    if (!count || count < 1 || count > 100) {
+    if (!count || count < 1 || count > 500) {
       return NextResponse.json(
-        { success: false, error: "يجب اختيار عدد بين 1 و 100" },
+        { success: false, error: "يجب اختيار عدد بين 1 و 500" },
         { status: 400 }
       );
     }
 
     const client = await pool.connect();
     try {
-      // 3. جلب بطاقات متاحة عشوائياً
       const result = await client.query(
         `SELECT number FROM tickets 
          WHERE status = 'available' 
@@ -25,23 +22,17 @@ export async function POST(req: NextRequest) {
         [count]
       );
 
-      // 4. التحقق من وجود عدد كافٍ من البطاقات
       if (result.rows.length < count) {
         return NextResponse.json(
-          { 
-            success: false, 
-            error: `لا يوجد سوى ${result.rows.length} بطاقات متاحة فقط` 
-          },
+          { success: false, error: `لا يوجد سوى ${result.rows.length} بطاقات متاحة فقط` },
           { status: 400 }
         );
       }
 
-      // 5. استخراج الأرقام وإرسالها
       const tickets = result.rows.map((row) => row.number);
       return NextResponse.json({ success: true, tickets });
-      
     } finally {
-      client.release(); // تحرير الاتصال بقاعدة البيانات
+      client.release();
     }
   } catch (error) {
     console.error("Error selecting random tickets:", error);
