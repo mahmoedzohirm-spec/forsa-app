@@ -18,6 +18,7 @@ interface TicketsSectionProps {
   setShowMyTickets: (show: boolean) => void;
   filteredTickets: Ticket[];
   onSelectTicket: (ticket: Ticket) => void;
+  onSelectMultipleTickets: (ticketNumbers: number[]) => void; // ✅ جديد
 }
 
 export function TicketsSection({
@@ -36,6 +37,7 @@ export function TicketsSection({
   setShowMyTickets,
   filteredTickets,
   onSelectTicket,
+  onSelectMultipleTickets, // ✅ جديد
 }: TicketsSectionProps) {
   const t = useTranslations('HomePage.tickets');
   const locale = useLocale();
@@ -50,6 +52,38 @@ export function TicketsSection({
   const pendingTickets = parseInt(counts.pending || "0");
   const soldTickets = parseInt(counts.sold || "0");
   const remainingCount = filteredTickets.length - visibleCount;
+
+  // ===== حالة الحجز المتعدد =====
+  const [multiSelectMode, setMultiSelectMode] = useState(false);
+  const [selectedCount, setSelectedCount] = useState(1);
+  const [selectedTickets, setSelectedTickets] = useState<number[]>([]);
+  const [isLoadingRandom, setIsLoadingRandom] = useState(false);
+
+  // ===== دالة اختيار عشوائي =====
+  const handleRandomSelect = async () => {
+    if (selectedCount < 1 || selectedCount > 500) {
+      alert("⚠️ يرجى اختيار عدد بين 1 و 500");
+      return;
+    }
+    setIsLoadingRandom(true);
+    try {
+      const res = await fetch("/api/tickets/random", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ count: selectedCount }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSelectedTickets(data.tickets);
+      } else {
+        alert("⚠️ " + data.error);
+      }
+    } catch {
+      alert("⚠️ حدث خطأ أثناء اختيار البطاقات");
+    } finally {
+      setIsLoadingRandom(false);
+    }
+  };
 
   // ===== دالة تحديد ألوان البطاقة (تعتمد فقط على الحالة) =====
   const getTicketStyle = (ticket: Ticket) => {
@@ -231,6 +265,137 @@ export function TicketsSection({
           </div>
         </div>
 
+        {/* ===== Multi-select toolbar (جديد) ===== */}
+        <div
+          style={{
+            background: "rgba(30, 20, 53, 0.6)",
+            border: "1px solid rgba(124, 58, 237, 0.3)",
+            borderRadius: "16px",
+            padding: "16px 20px",
+            marginBottom: "20px",
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "12px",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
+            <button
+              onClick={() => {
+                setMultiSelectMode(!multiSelectMode);
+                if (multiSelectMode) {
+                  setSelectedTickets([]);
+                  setSelectedCount(1);
+                }
+              }}
+              className={multiSelectMode ? "btn-gold" : "btn-purple"}
+              style={{
+                padding: "8px 20px",
+                borderRadius: "10px",
+                fontSize: "14px",
+                fontWeight: "700",
+                fontFamily: "Cairo, Inter, sans-serif",
+                border: "none",
+                cursor: "pointer",
+                background: multiSelectMode
+                  ? "linear-gradient(135deg, #f59e0b, #d97706)"
+                  : "rgba(124, 58, 237, 0.3)",
+                color: multiSelectMode ? "#1a0a3c" : "#c4b5fd",
+              }}
+            >
+              {multiSelectMode ? "❌ إلغاء الاختيار المتعدد" : "🎯 اختيار متعدد"}
+            </button>
+
+            {multiSelectMode && (
+              <>
+                <input
+                  type="number"
+                  min="1"
+                  max="500"
+                  value={selectedCount}
+                  onChange={(e) => setSelectedCount(parseInt(e.target.value) || 1)}
+                  style={{
+                    width: "80px",
+                    padding: "8px 12px",
+                    background: "rgba(15, 10, 28, 0.8)",
+                    border: "1px solid rgba(124, 58, 237, 0.3)",
+                    borderRadius: "10px",
+                    color: "#fff",
+                    fontSize: "14px",
+                    fontFamily: "Cairo, Inter, sans-serif",
+                  }}
+                />
+                <button
+                  onClick={handleRandomSelect}
+                  disabled={isLoadingRandom}
+                  className="btn-gold"
+                  style={{
+                    padding: "8px 20px",
+                    borderRadius: "10px",
+                    fontSize: "14px",
+                    fontWeight: "700",
+                    fontFamily: "Cairo, Inter, sans-serif",
+                    border: "none",
+                    cursor: isLoadingRandom ? "not-allowed" : "pointer",
+                    background: isLoadingRandom
+                      ? "rgba(124, 58, 237, 0.3)"
+                      : "linear-gradient(135deg, #f59e0b, #d97706)",
+                    color: isLoadingRandom ? "#6b7280" : "#1a0a3c",
+                  }}
+                >
+                  {isLoadingRandom ? "جارٍ..." : "🎲 اختر عشوائياً"}
+                </button>
+              </>
+            )}
+          </div>
+
+          {selectedTickets.length > 0 && (
+            <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
+              <span style={{ color: "#fbbf24", fontSize: "14px", fontWeight: "700" }}>
+                ✅ تم اختيار {selectedTickets.length} بطاقة
+              </span>
+              <button
+                onClick={() => {
+                  if (selectedTickets.length > 0) {
+                    onSelectMultipleTickets(selectedTickets);
+                  }
+                }}
+                className="btn-gold pulse-gold"
+                style={{
+                  padding: "8px 24px",
+                  borderRadius: "10px",
+                  fontSize: "14px",
+                  fontWeight: "700",
+                  fontFamily: "Cairo, Inter, sans-serif",
+                  border: "none",
+                  cursor: "pointer",
+                  background: "linear-gradient(135deg, #f59e0b, #d97706)",
+                  color: "#1a0a3c",
+                }}
+              >
+                📦 حجز البطاقات المختارة
+              </button>
+              <button
+                onClick={() => setSelectedTickets([])}
+                style={{
+                  padding: "6px 16px",
+                  borderRadius: "8px",
+                  fontSize: "13px",
+                  fontWeight: "600",
+                  fontFamily: "Cairo, Inter, sans-serif",
+                  border: "1px solid rgba(239, 68, 68, 0.3)",
+                  cursor: "pointer",
+                  background: "rgba(239, 68, 68, 0.1)",
+                  color: "#f87171",
+                }}
+              >
+                ✕ إلغاء
+              </button>
+            </div>
+          )}
+        </div>
+
         {/* شبكة البطاقات */}
         {loading ? (
           <SkeletonTicketGrid />
@@ -244,12 +409,19 @@ export function TicketsSection({
                 // نسمح بالنقر فقط إذا كانت البطاقة متاحة أو مملوكة للمستخدم (حتى لو معلقة)
                 const isClickable = t.status === "available" || isUserTicket;
 
+                // ✅ هل البطاقة مختارة في وضع الاختيار المتعدد؟
+                const isSelected = selectedTickets.includes(t.number);
+
                 return (
                   <div
                     key={t.number}
                     onClick={() => {
-                      if (isClickable) {
+                      if (isClickable && !multiSelectMode) {
                         onSelectTicket(t);
+                      } else if (multiSelectMode && t.status === "available") {
+                        // في وضع الاختيار المتعدد، لا نفتح الـ Modal بل نضيف/نزيل البطاقة من القائمة (تحديد يدوي)
+                        // لكن بما أننا نستخدم الاختيار العشوائي فقط، نعطل التحديد اليدوي هنا عشان ما يخربط مع العشوائي
+                        // يمكنك تفعيله إذا أردت اختيار يدوي أيضاً
                       }
                     }}
                     style={{
@@ -259,6 +431,8 @@ export function TicketsSection({
                       cursor: isClickable ? "pointer" : "default",
                       transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
                       ...style,
+                      border: isSelected ? "2px solid #f59e0b" : style.border,
+                      boxShadow: isSelected ? "0 0 20px rgba(245, 158, 11, 0.4)" : "none",
                       minHeight: "60px",
                       display: "flex",
                       flexDirection: "column",
