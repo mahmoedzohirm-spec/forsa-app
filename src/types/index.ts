@@ -20,7 +20,7 @@ export interface Ticket {
   updated_at: string;
   user_id?: number;
   receipt_image?: string;
-  booking_id?: number; // ✅ للحجز المتعدد
+  booking_id?: number; // ✅ هذا هو المطلوب
 }
 
 export interface PaymentMethod {
