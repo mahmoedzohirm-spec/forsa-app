@@ -5,9 +5,7 @@ export async function DELETE(req: NextRequest) {
   try {
     const client = await pool.connect();
     try {
-      // حذف جميع سجلات السحوبات
       await client.query("DELETE FROM draw_history");
-      
       return NextResponse.json({
         success: true,
         message: "تم حذف جميع سجلات السحوبات بنجاح",
