@@ -1,0 +1,200 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { DrawHistory } from "@/types";
+import { Spinner } from "@/components/ui/Spinner";
+import Link from "next/link";
+
+export default function WinnersPage() {
+  const [winners, setWinners] = useState<DrawHistory[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+
+  useEffect(() => {
+    fetch("/api/admin/draw")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.history) {
+          setWinners(data.history);
+        }
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  // تصفية حسب البحث (رقم البطاقة، الاسم، الجائزة)
+  const filteredWinners = winners.filter((w) => {
+    const query = search.toLowerCase();
+    return (
+      String(w.ticket_number).includes(query) ||
+      (w.winner_name && w.winner_name.toLowerCase().includes(query)) ||
+      w.prize.toLowerCase().includes(query)
+    );
+  });
+
+  // ترقيم الصفحات
+  const totalPages = Math.ceil(filteredWinners.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedWinners = filteredWinners.slice(startIndex, startIndex + itemsPerPage);
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #0f0a1c 0%, #080510 100%)" }}>
+        <Spinner />
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #0f0a1c 0%, #080510 100%)", padding: "40px 24px" }}>
+      <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+        {/* رأس الصفحة */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "32px", flexWrap: "wrap", gap: "16px" }}>
+          <div>
+            <h1 style={{ fontSize: "32px", fontWeight: "900", color: "#f59e0b" }}>
+              🏆 سجل الفائزين
+            </h1>
+            <p style={{ color: "#9ca3af", fontSize: "14px", marginTop: "4px" }}>
+              جميع الفائزين في سحوبات فرصة العمر
+            </p>
+          </div>
+          <Link href="/" style={{ textDecoration: "none" }}>
+            <button
+              style={{
+                padding: "10px 24px",
+                background: "rgba(124,58,237,0.3)",
+                border: "1px solid rgba(124,58,237,0.4)",
+                borderRadius: "10px",
+                color: "#c4b5fd",
+                cursor: "pointer",
+                fontSize: "14px",
+                fontWeight: "600",
+                fontFamily: "Cairo, Inter, sans-serif",
+              }}
+            >
+              ← العودة للرئيسية
+            </button>
+          </Link>
+        </div>
+
+        {/* شريط البحث */}
+        <div style={{ marginBottom: "24px" }}>
+          <input
+            type="text"
+            placeholder="🔍 بحث برقم البطاقة، الاسم، أو الجائزة"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "14px 20px",
+              background: "rgba(15, 10, 28, 0.8)",
+              border: "1px solid rgba(124,58,237,0.3)",
+              borderRadius: "12px",
+              color: "#fff",
+              fontSize: "15px",
+              fontFamily: "Cairo, Inter, sans-serif",
+            }}
+          />
+        </div>
+
+        {/* عرض النتائج */}
+        {filteredWinners.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "60px", color: "#9ca3af" }}>
+            <p style={{ fontSize: "48px", marginBottom: "16px" }}>🔍</p>
+            <p>لا توجد سجلات تطابق بحثك</p>
+          </div>
+        ) : (
+          <>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "20px" }}>
+              {paginatedWinners.map((winner) => (
+                <div
+                  key={winner.id}
+                  style={{
+                    background: "rgba(30, 20, 53, 0.7)",
+                    border: "1px solid rgba(124,58,237,0.3)",
+                    borderRadius: "16px",
+                    padding: "20px",
+                    transition: "all 0.3s",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-4px)";
+                    e.currentTarget.style.borderColor = "#f59e0b";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.borderColor = "rgba(124,58,237,0.3)";
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
+                    <span style={{ fontSize: "28px" }}>🎖️</span>
+                    <div>
+                      <p style={{ color: "#fbbf24", fontWeight: "800", fontSize: "20px" }}>
+                        #{winner.ticket_number}
+                      </p>
+                      <p style={{ color: "#c4b5fd", fontSize: "14px" }}>
+                        {winner.winner_name || "فائز مجهول"}
+                      </p>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ color: "#f59e0b", fontWeight: "700", fontSize: "15px" }}>
+                      {winner.prize}
+                    </span>
+                    <span style={{ color: "#6b7280", fontSize: "12px" }}>
+                      {new Date(winner.drawn_at).toLocaleDateString("ar-SA")}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* ترقيم الصفحات */}
+            {totalPages > 1 && (
+              <div style={{ display: "flex", justifyContent: "center", gap: "8px", marginTop: "32px" }}>
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                  disabled={currentPage === 1}
+                  style={{
+                    padding: "8px 16px",
+                    background: currentPage === 1 ? "rgba(255,255,255,0.05)" : "rgba(124,58,237,0.3)",
+                    border: "1px solid rgba(124,58,237,0.3)",
+                    borderRadius: "8px",
+                    color: currentPage === 1 ? "#6b7280" : "#c4b5fd",
+                    cursor: currentPage === 1 ? "not-allowed" : "pointer",
+                    fontFamily: "Cairo, Inter, sans-serif",
+                  }}
+                >
+                  السابق
+                </button>
+                <span style={{ color: "#fff", padding: "8px 16px" }}>
+                  {currentPage} / {totalPages}
+                </span>
+                <button
+                  onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  style={{
+                    padding: "8px 16px",
+                    background: currentPage === totalPages ? "rgba(255,255,255,0.05)" : "rgba(124,58,237,0.3)",
+                    border: "1px solid rgba(124,58,237,0.3)",
+                    borderRadius: "8px",
+                    color: currentPage === totalPages ? "#6b7280" : "#c4b5fd",
+                    cursor: currentPage === totalPages ? "not-allowed" : "pointer",
+                    fontFamily: "Cairo, Inter, sans-serif",
+                  }}
+                >
+                  التالي
+                </button>
+              </div>
+            )}
+          </>
+        )}
+
+        <p style={{ color: "#6b7280", textAlign: "center", fontSize: "13px", marginTop: "40px" }}>
+          إجمالي الفائزين: {filteredWinners.length}
+        </p>
+      </div>
+    </div>
+  );
+}
