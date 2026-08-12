@@ -206,6 +206,7 @@ export default function HomePage() {
 
   const scrollToTickets = () => setActiveSection("tickets");
 
+  // ===== التعديل: إضافة .sort() لترتيب البطاقات تصاعدياً =====
   const filteredTickets = tickets
     .filter((t) => {
       if (showMyTickets) return user && t.user_id === user.id;
@@ -214,8 +215,8 @@ export default function HomePage() {
       if (statusFilter === "sold") return t.status === "sold";
       return true;
     })
-    .filter((t) => (search ? String(t.number).includes(search) : true));
-    .sort((a, b) => a.number - b.number);
+    .filter((t) => (search ? String(t.number).includes(search) : true))
+    .sort((a, b) => a.number - b.number); // ✅ ترتيب تصاعدي (من 1 إلى 5000)
 
   const displayTickets = search ? filteredTickets : filteredTickets.slice(0, visibleCount);
   const userTicketCount = user ? tickets.filter((t) => t.user_id === user.id).length : 0;
