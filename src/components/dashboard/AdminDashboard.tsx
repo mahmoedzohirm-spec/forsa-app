@@ -27,7 +27,7 @@ export default function AdminDashboard({
   const [counts, setCounts] = useState<TicketCounts>({ total: "0", available: "0", pending: "0", sold: "0" });
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState("");
-  const [rejectModal, setRejectModal] = useState<{ ticketNumber: number } | null>(null);
+  const [rejectModal, setRejectModal] = useState<{ ticketNumber?: number; bookingId?: number } | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [winnerModal, setWinnerModal] = useState<{ ticket: DrawTicket; prize: string } | null>(null);
   const [selectedPrize, setSelectedPrize] = useState("");
@@ -57,6 +57,45 @@ export default function AdminDashboard({
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(""), 3600);
+  };
+
+  // ===== دوال قبول ورفض المجموعات (Batch) =====
+  const handleApproveBatch = async (bookingId: number) => {
+    try {
+      const res = await fetch("/api/admin/tickets/approve-batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`✅ تم قبول ${data.tickets?.length || 'جميع'} البطاقات بنجاح`);
+        loadAll();
+      } else {
+        showToast("⚠️ فشل القبول: " + data.error);
+      }
+    } catch {
+      showToast("⚠️ خطأ في الاتصال");
+    }
+  };
+
+  const handleRejectBatch = async (bookingId: number, reason: string) => {
+    try {
+      const res = await fetch("/api/admin/tickets/reject-batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId, reason }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast("❌ تم رفض جميع البطاقات بنجاح");
+        loadAll();
+      } else {
+        showToast("⚠️ فشل الرفض: " + data.error);
+      }
+    } catch {
+      showToast("⚠️ خطأ في الاتصال");
+    }
   };
 
   // ✅ loadAll تم تعديلها لـ 5000 بطاقة
@@ -155,11 +194,20 @@ export default function AdminDashboard({
 
   const handleReject = async () => {
     if (!rejectModal) return;
+    const { ticketNumber, bookingId } = rejectModal;
+    if (bookingId) {
+      // رفض مجموعة
+      await handleRejectBatch(bookingId, rejectReason);
+      setRejectModal(null);
+      setRejectReason("");
+      return;
+    }
+    // رفض فردي
     try {
       const res = await fetch("/api/admin/tickets/reject", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ticketNumber: rejectModal.ticketNumber, reason: rejectReason }),
+        body: JSON.stringify({ ticketNumber, reason: rejectReason }),
       });
       const data = await res.json();
       if (data.success) {
@@ -167,14 +215,14 @@ export default function AdminDashboard({
         setRejectModal(null);
         setRejectReason("");
         loadAll();
-        const ticket = tickets.find((t) => t.number === rejectModal.ticketNumber);
+        const ticket = tickets.find((t) => t.number === ticketNumber);
         if (ticket?.user_id) {
           await sendNotification(
             ticket.user_id,
             "❌ تم رفض طلبك",
-            `تم رفض طلب حجز البطاقة رقم ${rejectModal.ticketNumber}`,
+            `تم رفض طلب حجز البطاقة رقم ${ticketNumber}`,
             "rejection",
-            { ticketNumber: rejectModal.ticketNumber, reason: rejectReason }
+            { ticketNumber: ticketNumber, reason: rejectReason }
           );
         }
       } else {
@@ -515,7 +563,7 @@ export default function AdminDashboard({
             }}
           >
             <h3 style={{ color: "#f87171", fontWeight: "800", fontSize: "18px", marginBottom: "16px" }}>
-              ❌ رفض الطلب #{rejectModal.ticketNumber}
+              ❌ رفض الطلب {rejectModal.ticketNumber ? `#${rejectModal.ticketNumber}` : rejectModal.bookingId ? `(المجموعة #${rejectModal.bookingId})` : ''}
             </h3>
             <textarea
               style={{ ...inputStyle, minHeight: "100px", marginBottom: "16px" }}
@@ -986,13 +1034,9 @@ export default function AdminDashboard({
                           </div>
                         </div>
                         <div style={{ display: "flex", gap: "10px" }}>
+                          {/* ✅ قبول المجموعة باستخدام handleApproveBatch */}
                           <button
-                            onClick={() => {
-                              // قبول المجموعة كلها: نمرر booking_id
-                              // يمكنك إنشاء API جديد لقبول المجموعة، أو تعديل الـ API الحالي لدعم booking_id
-                              // مؤقتاً: نمرر أول بطاقة
-                              handleApprove(first.number);
-                            }}
+                            onClick={() => handleApproveBatch(first.booking_id)}
                             style={{
                               padding: "10px 20px",
                               background: "linear-gradient(135deg, #059669, #047857)",
@@ -1007,11 +1051,9 @@ export default function AdminDashboard({
                           >
                             ✅ قبول الكل
                           </button>
+                          {/* ✅ رفض المجموعة باستخدام bookingId */}
                           <button
-                            onClick={() => {
-                              // رفض المجموعة
-                              setRejectModal({ ticketNumber: first.number });
-                            }}
+                            onClick={() => setRejectModal({ bookingId: first.booking_id })}
                             style={{
                               padding: "10px 20px",
                               background: "linear-gradient(135deg, #dc2626, #b91c1c)",
