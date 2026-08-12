@@ -215,6 +215,7 @@ export default function HomePage() {
       return true;
     })
     .filter((t) => (search ? String(t.number).includes(search) : true));
+    .sort((a, b) => a.number - b.number);
 
   const displayTickets = search ? filteredTickets : filteredTickets.slice(0, visibleCount);
   const userTicketCount = user ? tickets.filter((t) => t.user_id === user.id).length : 0;
