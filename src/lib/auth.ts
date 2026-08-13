@@ -21,18 +21,18 @@ export function verifyToken(token: string): any {
   }
 }
 
-export function getTokenFromCookies(): string | null {
+export async function getTokenFromCookies(): Promise<string | null> {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     return cookieStore.get('token')?.value || null;
   } catch {
     return null;
   }
 }
 
-export function setTokenCookie(token: string): void {
+export async function setTokenCookie(token: string): Promise<void> {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     cookieStore.set('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -45,9 +45,9 @@ export function setTokenCookie(token: string): void {
   }
 }
 
-export function clearTokenCookie(): void {
+export async function clearTokenCookie(): Promise<void> {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     cookieStore.delete('token');
   } catch (error) {
     console.error('Error clearing token cookie:', error);
