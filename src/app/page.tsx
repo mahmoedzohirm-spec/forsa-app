@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import dynamic from "next/dynamic";
-import Link from "next/link";
+import Link from "next/link"; // ✅ استيراد Link
 import { useUser } from "@/hooks/useUser";
 import { useTickets } from "@/hooks/useTickets";
 import NotificationBell from "@/components/ui/NotificationBell";
@@ -29,7 +29,7 @@ const AdminDashboard = dynamic(
 );
 
 export default function HomePage() {
-  const { user, login, logout, setUser, loading: userLoading } = useUser();
+  const { user, login, logout, setUser } = useUser();
   const { tickets, counts, subscribers, loading: ticketsLoading, loadTickets } = useTickets();
   const { settings, prizes, loading: settingsLoading, loadSettingsAndPrizes } = useSettings();
   const { toast, showToast } = useToast();
@@ -62,7 +62,92 @@ export default function HomePage() {
     showToastRef.current = showToast;
   });
 
-  useEffect(() => {}, []);
+  const parseCookieValue = (value: string): any => {
+    let decoded = value;
+    for (let i = 0; i < 5; i++) {
+      try {
+        if (decoded.startsWith("{")) {
+          return JSON.parse(decoded);
+        }
+        const decodedOnce = decodeURIComponent(decoded);
+        if (decodedOnce.startsWith("{")) {
+          return JSON.parse(decodedOnce);
+        }
+        decoded = decodedOnce;
+      } catch {
+        try {
+          decoded = decodeURIComponent(decoded);
+        } catch {
+          break;
+        }
+      }
+    }
+    if (decoded && decoded.startsWith("{")) {
+      try {
+        return JSON.parse(decoded);
+      } catch {
+        // فشل
+      }
+    }
+    throw new Error("Unable to parse cookie value");
+  };
+
+  useEffect(() => {
+    const checkUser = () => {
+      const saved = localStorage.getItem("forsaUser");
+      if (saved && !userRef.current) {
+        try {
+          const userData = JSON.parse(saved);
+          setUserRef.current(userData);
+          showToastRef.current("👋 مرحباً! تم تسجيل الدخول بنجاح.");
+          console.log("✅ User restored from localStorage:", userData.email);
+          return;
+        } catch (e) {
+          console.error("Error parsing localStorage:", e);
+        }
+      }
+
+      const cookie = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("user="));
+      if (cookie && !userRef.current) {
+        try {
+          const cookieValue = cookie.substring(cookie.indexOf("=") + 1);
+          const userData = parseCookieValue(cookieValue);
+          setUserRef.current(userData);
+          localStorage.setItem("forsaUser", JSON.stringify(userData));
+          showToastRef.current("👋 مرحباً! تم تسجيل الدخول بنجاح.");
+          console.log("✅ User restored from cookie:", userData.email);
+          document.cookie = "user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        } catch (e) {
+          console.error("Error parsing cookie:", e);
+        }
+      }
+    };
+
+    checkUser();
+
+    const interval = setInterval(() => {
+      const cookie = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("user="));
+      if (cookie && !userRef.current) {
+        try {
+          const cookieValue = cookie.substring(cookie.indexOf("=") + 1);
+          const userData = parseCookieValue(cookieValue);
+          setUserRef.current(userData);
+          localStorage.setItem("forsaUser", JSON.stringify(userData));
+          showToastRef.current("👋 مرحباً! تم تسجيل الدخول بنجاح.");
+          document.cookie = "user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+          console.log("✅ User restored from cookie (interval):", userData.email);
+        } catch (e) {
+          console.error("Error parsing cookie (interval):", e);
+        }
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (!hasLoaded.current) {
@@ -124,26 +209,22 @@ export default function HomePage() {
     });
   }, [user]);
 
-  // ✅ التعديل الأساسي: استقبال كائن User كامل واستخراج email و password
-  const handleLogin = async (userData: any) => {
-    // userData يحتوي على email, password, name, id, is_admin ...
-    const success = await login(userData.email, userData.password);
-    if (success) {
-      showToast("👋 مرحباً! تم تسجيل الدخول بنجاح.");
-      if (user?.is_admin) setShowDashboard(true);
-    } else {
-      showToast("❌ حدث خطأ أثناء تسجيل الدخول.");
-    }
+  const handleLogin = (u: any) => {
+    login(u);
+    showToast("👋 مرحباً! تم تسجيل الدخول بنجاح.");
+    if (u.is_admin) setShowDashboard(true);
   };
 
   const handleLogout = useCallback(() => {
     logout();
     setShowDashboard(false);
+    document.cookie = "user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     showToast("👋 تم تسجيل الخروج.");
   }, [logout, showToast]);
 
   const scrollToTickets = () => setActiveSection("tickets");
 
+  // ===== التعديل: إضافة .sort() لترتيب البطاقات تصاعدياً =====
   const filteredTickets = tickets
     .filter((t) => {
       if (showMyTickets) return user && t.user_id === user.id;
@@ -153,20 +234,22 @@ export default function HomePage() {
       return true;
     })
     .filter((t) => (search ? String(t.number).includes(search) : true))
-    .sort((a, b) => a.number - b.number);
+    .sort((a, b) => a.number - b.number); // ✅ ترتيب تصاعدي (من 1 إلى 5000)
 
   const displayTickets = search ? filteredTickets : filteredTickets.slice(0, visibleCount);
   const userTicketCount = user ? tickets.filter((t) => t.user_id === user.id).length : 0;
 
+  // ===== دالة لاختيار بطاقات متعددة =====
   const handleSelectMultipleTickets = (ticketNumbers: number[]) => {
     if (!user) {
       setShowAuth(true);
       return;
     }
+    // فتح الـ Modal مع بيانات متعددة
     setSelectedTicket({ multiple: true, numbers: ticketNumbers });
   };
 
-  if (!initialized || settingsLoading || userLoading) {
+  if (!initialized || settingsLoading) {
     return (
       <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #0f0a1c 0%, #080510 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: "20px" }}>
         <div style={{ fontSize: "60px" }} className="float-anim">🏆</div>
@@ -205,8 +288,10 @@ export default function HomePage() {
         />
       )}
 
+      {/* ===== القائمة العلوية المعدلة ===== */}
       <nav style={{ position: "sticky", top: 0, zIndex: 100, background: "rgba(8, 5, 16, 0.95)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(124, 58, 237, 0.2)" }}>
         <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 16px", height: "70px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          {/* الشعار */}
           <div style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }} onClick={() => setActiveSection("home")}>
             <span style={{ color: "#f59e0b" }}><TrophyIcon /></span>
             <span style={{ fontSize: "20px", fontWeight: "900", background: "linear-gradient(135deg, #f59e0b, #fbbf24)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
@@ -221,7 +306,7 @@ export default function HomePage() {
                 { id: "tickets", label: "البطاقات" },
                 { id: "prizes", label: "الجوائز" },
                 { id: "how", label: "السحوبات" },
-                { id: "winners", label: "🏆 الفائزون" },
+                { id: "winners", label: "🏆 الفائزون" }, // ✅ إضافة رابط الفائزين
               ].map((link) => (
                 <button
                   key={link.id}
@@ -272,6 +357,7 @@ export default function HomePage() {
                 </button>
               )}
 
+              {/* زر الهامبرغر (يظهر على الموبايل) */}
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 style={{
@@ -292,6 +378,7 @@ export default function HomePage() {
           </div>
         </div>
 
+        {/* ===== القائمة المنسدلة للموبايل (تظهر عند الضغط على الهامبرغر) ===== */}
         <div style={{
           display: isMobileMenuOpen ? "block" : "none",
           background: "rgba(8, 5, 16, 0.98)",
@@ -305,7 +392,7 @@ export default function HomePage() {
             { id: "tickets", label: "البطاقات" },
             { id: "prizes", label: "الجوائز" },
             { id: "how", label: "السحوبات" },
-            { id: "winners", label: "🏆 الفائزون" },
+            { id: "winners", label: "🏆 الفائزون" }, // ✅ إضافة رابط الفائزين
           ].map((link) => (
             <button
               key={link.id}
@@ -339,6 +426,7 @@ export default function HomePage() {
           
           <hr style={{ border: "1px solid rgba(124,58,237,0.2)", margin: "12px 0" }} />
           
+          {/* ✅ زر تغيير اللغة داخل القائمة المنسدلة */}
           <div style={{ padding: "8px 16px" }}>
             <LanguageSwitcher />
           </div>
@@ -424,6 +512,7 @@ export default function HomePage() {
         />
       )}
 
+      {/* عرض سجل الفائزين في الصفحة الرئيسية */}
       {(activeSection === "home" || activeSection === "how") && (
         <HistorySection winners={recentWinners} />
       )}
