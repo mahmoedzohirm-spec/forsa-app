@@ -87,21 +87,21 @@ export function Footer({ settings }: { settings: AppSettings }) {
           marginTop: "12px",
         }}
       >
-        {/* الباركود */}
+        {/* الباركود - أبيض وأسود */}
         <div
           style={{
             display: "flex",
             justifyContent: "center",
             padding: "10px",
-            background: "rgba(0,0,0,0.3)",
-            borderRadius: "16px",
+            background: "#ffffff", // ✅ خلفية بيضاء للباركود
+            borderRadius: "12px",
           }}
         >
           <QRCodeSVG
             value={siteUrl}
             size={140}
-            bgColor="rgba(0,0,0,0)"
-            fgColor="#fbbf24"
+            bgColor="#ffffff"        // ✅ خلفية بيضاء
+            fgColor="#000000"        // ✅ نقاط سوداء
             level="H"
             includeMargin={false}
           />
