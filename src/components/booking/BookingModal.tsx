@@ -327,9 +327,18 @@ export default function BookingModal({
                   </div>
                 )}
                 {selectedMethodData.account_holder && (
-                  <div>
+                  <div style={{ marginBottom: "8px" }}>
                     <span style={{ color: "#9ca3af", fontSize: "12px" }}>{t('details.account_holder')}</span>
                     <p style={{ color: "#fff", fontSize: "14px", fontWeight: "600" }}>{selectedMethodData.account_holder}</p>
+                  </div>
+                )}
+                {/* ✅ عرض رقم الجوال (الإضافة الوحيدة) */}
+                {selectedMethodData.phone_number && (
+                  <div>
+                    <span style={{ color: "#9ca3af", fontSize: "12px" }}>📱 رقم الجوال</span>
+                    <p style={{ color: "#fff", fontSize: "14px", fontWeight: "600" }}>
+                      {selectedMethodData.phone_number}
+                    </p>
                   </div>
                 )}
               </div>
