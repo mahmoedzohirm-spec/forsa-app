@@ -124,13 +124,12 @@ export default function HomePage() {
     });
   }, [user]);
 
-  // ✅ الحل النهائي: handleLogin تستقبل User (كما تتوقع AuthModal)
+  // ✅ التعديل الأساسي: استقبال كائن User كامل واستخراج email و password
   const handleLogin = async (userData: any) => {
-    // استخراج email و password من كائن user الذي أرسله AuthModal
+    // userData يحتوي على email, password, name, id, is_admin ...
     const success = await login(userData.email, userData.password);
     if (success) {
       showToast("👋 مرحباً! تم تسجيل الدخول بنجاح.");
-      // بعد تسجيل الدخول، نستخدم user من useUser (الذي تم تحديثه)
       if (user?.is_admin) setShowDashboard(true);
     } else {
       showToast("❌ حدث خطأ أثناء تسجيل الدخول.");
