@@ -92,7 +92,7 @@ export async function GET(req: NextRequest) {
         console.log("✅ Existing user found:", userData.email);
       }
 
-      // الكوكي القديم
+      // تخزين بيانات المستخدم في كوكي
       const cookieStore = cookies();
       cookieStore.set("user", JSON.stringify(userData), {
         httpOnly: true,
