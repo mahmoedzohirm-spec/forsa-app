@@ -62,10 +62,7 @@ export default function HomePage() {
     showToastRef.current = showToast;
   });
 
-  // ✅ useUser يدير حالة المستخدم عبر API
-  useEffect(() => {
-    // لم نعد بحاجة للتحقق من localStorage أو cookies يدوياً
-  }, []);
+  useEffect(() => {}, []);
 
   useEffect(() => {
     if (!hasLoaded.current) {
@@ -127,8 +124,9 @@ export default function HomePage() {
     });
   }, [user]);
 
-  // ✅ دالة handleLogin المعدلة: تستقبل كائن user من AuthModal
-  const handleLogin = async (userData: { email: string; password: string }) => {
+  // ✅ الحل النهائي: handleLogin تستقبل User (كما تتوقع AuthModal)
+  const handleLogin = async (userData: any) => {
+    // استخراج email و password من كائن user الذي أرسله AuthModal
     const success = await login(userData.email, userData.password);
     if (success) {
       showToast("👋 مرحباً! تم تسجيل الدخول بنجاح.");
