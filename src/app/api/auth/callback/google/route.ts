@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/db";
+import { generateToken, setTokenCookie } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
@@ -22,17 +23,22 @@ export async function GET(req: NextRequest) {
 
   try {
     // 1. الحصول على access_token
-    const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        code,
-        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
-        client_secret: process.env.GOOGLE_CLIENT_SECRET!,
-        redirect_uri: `${process.env.NEXTAUTH_URL}/api/auth/callback/google`,
-        grant_type: "authorization_code",
-      }),
-    });
+    const tokenResponse = await fetch(
+      "https://oauth2.googleapis.com/token",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          code,
+          client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
+          client_secret: process.env.GOOGLE_CLIENT_SECRET!,
+          redirect_uri: `${process.env.NEXTAUTH_URL}/api/auth/callback/google`,
+          grant_type: "authorization_code",
+        }),
+      }
+    );
 
     const tokenData = await tokenResponse.json();
     if (!tokenData.access_token) {
@@ -46,7 +52,9 @@ export async function GET(req: NextRequest) {
     const userInfoResponse = await fetch(
       "https://www.googleapis.com/oauth2/v2/userinfo",
       {
-        headers: { Authorization: `Bearer ${tokenData.access_token}` },
+        headers: {
+          Authorization: `Bearer ${tokenData.access_token}`,
+        },
       }
     );
     const userInfo = await userInfoResponse.json();
@@ -69,8 +77,8 @@ export async function GET(req: NextRequest) {
       let userData;
       if (existingUser.rows.length === 0) {
         const newUser = await client.query(
-          `INSERT INTO users (name, email, password, is_admin)
-           VALUES ($1, $2, $3, $4)
+          `INSERT INTO users (name, email, password, is_admin) 
+           VALUES ($1, $2, $3, $4) 
            RETURNING id, name, email, phone, is_admin, is_banned, created_at`,
           [userInfo.name || userInfo.email.split("@")[0], userInfo.email, "", false]
         );
@@ -79,7 +87,7 @@ export async function GET(req: NextRequest) {
       } else {
         userData = existingUser.rows[0];
         if (userData.is_banned) {
-          console.log("🚫 User is banned:", userData.email);
+          console.log("User is banned:", userData.email);
           return NextResponse.redirect(
             `${process.env.NEXTAUTH_URL}/?error=account_banned`
           );
@@ -87,32 +95,26 @@ export async function GET(req: NextRequest) {
         console.log("✅ Existing user found:", userData.email);
       }
 
-      // 4. تخزين المستخدم في كوكي (بدون تشفير)
+      // ✅ 4. توليد توكن JWT وحفظه في كوكي HttpOnly (بدلاً من كوكي user العادي)
+      const token = generateToken(userData);
+      await setTokenCookie(token);
+
+      // ✅ 5. حذف الكوكي القديم (user) إذا كان موجوداً
       const response = NextResponse.redirect(`${process.env.NEXTAUTH_URL}/`);
+      response.cookies.delete("user");
 
-      // نضع JSON مباشرة بدون أي encodeURIComponent
-      response.cookies.set({
-        name: "user",
-        value: JSON.stringify(userData),
-        httpOnly: false,
-        path: "/",
-        maxAge: 60 * 60 * 24 * 7,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
-      });
-
-      console.log("🍪 Cookie set (RAW JSON) for user:", userData.email);
+      console.log("✅ JWT token set for user:", userData.email);
       return response;
     } catch (dbError) {
       console.error("Database error during Google login:", dbError);
       return NextResponse.redirect(
-        `${process.env.NEXTAUTH_URL}/?error=database_error`
+        `${process.env.NEXTAUTH_URL}/?error=google_db_failed`
       );
     } finally {
       client.release();
     }
   } catch (error) {
-    console.error("Google callback error:", error);
+    console.error("Google OAuth error:", error);
     return NextResponse.redirect(
       `${process.env.NEXTAUTH_URL}/?error=google_auth_failed`
     );
