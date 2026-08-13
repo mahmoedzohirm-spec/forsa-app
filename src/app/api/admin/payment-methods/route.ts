@@ -24,10 +24,10 @@ export async function GET() {
   }
 }
 
-// إضافة طريقة دفع جديدة
+// ✅ إضافة طريقة دفع جديدة (مع phone_number)
 export async function POST(req: NextRequest) {
   try {
-    const { name, iban, bank_name, account_holder } = await req.json();
+    const { name, iban, bank_name, account_holder, phone_number } = await req.json();
     if (!name) {
       return NextResponse.json(
         { success: false, error: "اسم طريقة الدفع مطلوب" },
@@ -38,10 +38,10 @@ export async function POST(req: NextRequest) {
     const client = await pool.connect();
     try {
       const result = await client.query(
-        `INSERT INTO payment_methods (name, iban, bank_name, account_holder)
-         VALUES ($1, $2, $3, $4)
+        `INSERT INTO payment_methods (name, iban, bank_name, account_holder, phone_number)
+         VALUES ($1, $2, $3, $4, $5)
          RETURNING *`,
-        [name, iban || null, bank_name || null, account_holder || null]
+        [name, iban || null, bank_name || null, account_holder || null, phone_number || null]
       );
       return NextResponse.json({ success: true, method: result.rows[0] });
     } finally {
@@ -56,10 +56,10 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// تعديل طريقة دفع
+// ✅ تعديل طريقة دفع (مع phone_number)
 export async function PUT(req: NextRequest) {
   try {
-    const { id, name, iban, bank_name, account_holder } = await req.json();
+    const { id, name, iban, bank_name, account_holder, phone_number } = await req.json();
     if (!id || !name) {
       return NextResponse.json(
         { success: false, error: "المعرف والاسم مطلوبان" },
@@ -71,9 +71,9 @@ export async function PUT(req: NextRequest) {
     try {
       await client.query(
         `UPDATE payment_methods
-         SET name = $1, iban = $2, bank_name = $3, account_holder = $4
-         WHERE id = $5`,
-        [name, iban || null, bank_name || null, account_holder || null, id]
+         SET name = $1, iban = $2, bank_name = $3, account_holder = $4, phone_number = $5
+         WHERE id = $6`,
+        [name, iban || null, bank_name || null, account_holder || null, phone_number || null, id]
       );
       return NextResponse.json({ success: true, message: "تم تحديث طريقة الدفع" });
     } finally {
