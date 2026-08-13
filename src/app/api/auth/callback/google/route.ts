@@ -92,8 +92,8 @@ export async function GET(req: NextRequest) {
         console.log("✅ Existing user found:", userData.email);
       }
 
-      // تخزين بيانات المستخدم في كوكي
-      const cookieStore = cookies();
+      // ✅ التعديل: استخدام await مع cookies()
+      const cookieStore = await cookies();
       cookieStore.set("user", JSON.stringify(userData), {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
