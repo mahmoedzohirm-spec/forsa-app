@@ -149,17 +149,21 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, []);
 
+  // ✅ التعديل: تحميل متوازي (أسرع)
   useEffect(() => {
     if (!hasLoaded.current) {
       hasLoaded.current = true;
       const bootstrap = async () => {
         try {
-          await fetch("/api/init");
+          // تحميل كل شيء بالتوازي بدلاً من التسلسل
+          await Promise.all([
+            fetch("/api/init"),
+            loadTickets(),
+            loadSettingsAndPrizes()
+          ]);
           setInitialized(true);
-          await loadTickets();
-          await loadSettingsAndPrizes();
         } catch (e) {
-          console.error(e);
+          console.error("Bootstrap error:", e);
           setInitialized(true);
         }
       };
