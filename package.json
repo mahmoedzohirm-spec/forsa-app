@@ -1,5 +1,6 @@
 {
-  "name": "nextjs-postgresql-template",
+  "name": "forsa-app",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -15,6 +16,7 @@
     "drizzle-orm": "0.45.2",
     "firebase": "^12.17.1",
     "firebase-admin": "^11.11.1",
+    "jsonwebtoken": "^9.0.2",
     "next": "16.2.6",
     "next-intl": "^4.13.5",
     "next-pwa": "^5.6.0",
@@ -27,6 +29,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "4.1.17",
     "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.5",
     "@types/node": "22.19.15",
     "@types/nodemailer": "^8.0.1",
     "@types/pg": "8.18.0",
