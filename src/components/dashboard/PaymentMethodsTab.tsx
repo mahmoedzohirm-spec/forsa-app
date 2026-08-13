@@ -14,6 +14,7 @@ export function PaymentMethodsTab({ showToast }: PaymentMethodsTabProps) {
     iban: "",
     bank_name: "",
     account_holder: "",
+    phone_number: "", // ✅ الحقل الجديد
   });
 
   const loadMethods = async () => {
@@ -41,9 +42,7 @@ export function PaymentMethodsTab({ showToast }: PaymentMethodsTabProps) {
     }
 
     try {
-      const url = editingId
-        ? `/api/admin/payment-methods`
-        : `/api/admin/payment-methods`;
+      const url = `/api/admin/payment-methods`;
       const method = editingId ? "PUT" : "POST";
       const body = editingId
         ? { id: editingId, ...formData }
@@ -57,7 +56,7 @@ export function PaymentMethodsTab({ showToast }: PaymentMethodsTabProps) {
       const data = await res.json();
       if (data.success) {
         showToast(editingId ? "✅ تم تحديث طريقة الدفع" : "✅ تم إضافة طريقة الدفع");
-        setFormData({ name: "", iban: "", bank_name: "", account_holder: "" });
+        setFormData({ name: "", iban: "", bank_name: "", account_holder: "", phone_number: "" });
         setEditingId(null);
         loadMethods();
       } else {
@@ -168,6 +167,19 @@ export function PaymentMethodsTab({ showToast }: PaymentMethodsTabProps) {
                 onChange={(e) => setFormData({ ...formData, account_holder: e.target.value })}
               />
             </div>
+            {/* ✅ الحقل الجديد: رقم الجوال */}
+            <div>
+              <label style={{ color: "#9ca3af", fontSize: "13px", display: "block", marginBottom: "6px" }}>
+                رقم الجوال (اختياري)
+              </label>
+              <input
+                style={inputStyle}
+                type="tel"
+                placeholder="059XXXXXXX"
+                value={formData.phone_number}
+                onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+              />
+            </div>
           </div>
           <div style={{ display: "flex", gap: "10px", marginTop: "16px" }}>
             <button
@@ -182,7 +194,7 @@ export function PaymentMethodsTab({ showToast }: PaymentMethodsTabProps) {
                 type="button"
                 onClick={() => {
                   setEditingId(null);
-                  setFormData({ name: "", iban: "", bank_name: "", account_holder: "" });
+                  setFormData({ name: "", iban: "", bank_name: "", account_holder: "", phone_number: "" });
                 }}
                 style={{
                   padding: "10px 24px",
@@ -233,6 +245,8 @@ export function PaymentMethodsTab({ showToast }: PaymentMethodsTabProps) {
                   {m.iban && <p style={{ color: "#9ca3af", fontSize: "13px" }}>آيبان: {m.iban}</p>}
                   {m.bank_name && <p style={{ color: "#9ca3af", fontSize: "13px" }}>البنك: {m.bank_name}</p>}
                   {m.account_holder && <p style={{ color: "#9ca3af", fontSize: "13px" }}>صاحب الحساب: {m.account_holder}</p>}
+                  {/* ✅ عرض رقم الجوال */}
+                  {m.phone_number && <p style={{ color: "#9ca3af", fontSize: "13px" }}>📱 الجوال: {m.phone_number}</p>}
                 </div>
                 <div style={{ display: "flex", gap: "8px" }}>
                   <button
@@ -243,6 +257,7 @@ export function PaymentMethodsTab({ showToast }: PaymentMethodsTabProps) {
                         iban: m.iban || "",
                         bank_name: m.bank_name || "",
                         account_holder: m.account_holder || "",
+                        phone_number: m.phone_number || "",
                       });
                     }}
                     style={{
