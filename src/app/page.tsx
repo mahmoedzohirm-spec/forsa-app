@@ -41,7 +41,7 @@ export default function HomePage() {
   const [initialized, setInitialized] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("available");
   const [search, setSearch] = useState("");
   const [visibleCount, setVisibleCount] = useState(300);
   const [showMyTickets, setShowMyTickets] = useState(false);
