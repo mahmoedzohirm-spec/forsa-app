@@ -3,37 +3,24 @@ import { pool } from "@/db";
 import { cookies } from "next/headers";
 
 export async function GET(req: NextRequest) {
-  console.log("🚀 Google Callback started");
   const searchParams = req.nextUrl.searchParams;
   const code = searchParams.get("code");
   const error = searchParams.get("error");
 
-  if (error) {
-    console.error("❌ Google OAuth error:", error);
+  if (error || !code) {
+    console.error("Google OAuth error or missing code:", error);
     return NextResponse.redirect(
       `${process.env.NEXTAUTH_URL}/?error=google_auth_failed`
     );
   }
 
-  if (!code) {
-    console.error("❌ Missing code from Google");
-    return NextResponse.redirect(
-      `${process.env.NEXTAUTH_URL}/?error=missing_code`
-    );
-  }
-
-  console.log("✅ Code received from Google");
-
   try {
-    // 1. الحصول على التوكن
-    console.log("🔄 Fetching access token...");
+    // 1. الحصول على التوكن من Google
     const tokenResponse = await fetch(
       "https://oauth2.googleapis.com/token",
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({
           code,
           client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
@@ -46,35 +33,29 @@ export async function GET(req: NextRequest) {
 
     const tokenData = await tokenResponse.json();
     if (!tokenData.access_token) {
-      console.error("❌ Google token error:", tokenData);
+      console.error("Google token error:", tokenData);
       return NextResponse.redirect(
         `${process.env.NEXTAUTH_URL}/?error=google_token_failed`
       );
     }
-    console.log("✅ Access token obtained");
 
-    // 2. جلب معلومات المستخدم
-    console.log("🔄 Fetching user info...");
+    // 2. جلب بيانات المستخدم من Google
     const userInfoResponse = await fetch(
       "https://www.googleapis.com/oauth2/v2/userinfo",
       {
-        headers: {
-          Authorization: `Bearer ${tokenData.access_token}`,
-        },
+        headers: { Authorization: `Bearer ${tokenData.access_token}` },
       }
     );
     const userInfo = await userInfoResponse.json();
-    console.log("👤 User info:", userInfo.email);
 
     if (!userInfo.email) {
-      console.error("❌ No email from Google:", userInfo);
+      console.error("No email from Google:", userInfo);
       return NextResponse.redirect(
         `${process.env.NEXTAUTH_URL}/?error=google_email_missing`
       );
     }
 
-    // 3. البحث أو إنشاء المستخدم في قاعدة البيانات
-    console.log("🔄 Checking/creating user in database...");
+    // 3. البحث عن المستخدم أو إنشاؤه في قاعدة البيانات
     const client = await pool.connect();
     try {
       const existingUser = await client.query(
@@ -95,7 +76,7 @@ export async function GET(req: NextRequest) {
       } else {
         userData = existingUser.rows[0];
         if (userData.is_banned) {
-          console.log("🚫 User is banned:", userData.email);
+          console.log("User is banned:", userData.email);
           return NextResponse.redirect(
             `${process.env.NEXTAUTH_URL}/?error=account_banned`
           );
@@ -103,8 +84,7 @@ export async function GET(req: NextRequest) {
         console.log("✅ Existing user found:", userData.email);
       }
 
-      // 4. تعيين الكوكي (مع await)
-      console.log("🔄 Setting cookie...");
+      // 4. تعيين الكوكي (التعديل الأساسي مع await)
       const cookieStore = await cookies();
       cookieStore.set("user", JSON.stringify(userData), {
         httpOnly: true,
@@ -113,13 +93,10 @@ export async function GET(req: NextRequest) {
         maxAge: 60 * 60 * 24 * 7,
         path: "/",
       });
-      console.log("✅ Cookie set successfully");
 
-      // 5. إعادة التوجيه
-      console.log("✅ Redirecting to home...");
       return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/`);
     } catch (dbError) {
-      console.error("❌ Database error during Google login:", dbError);
+      console.error("Database error:", dbError);
       return NextResponse.redirect(
         `${process.env.NEXTAUTH_URL}/?error=google_db_failed`
       );
@@ -127,7 +104,7 @@ export async function GET(req: NextRequest) {
       client.release();
     }
   } catch (error) {
-    console.error("❌ Google OAuth error:", error);
+    console.error("Google OAuth error:", error);
     return NextResponse.redirect(
       `${process.env.NEXTAUTH_URL}/?error=google_auth_failed`
     );
