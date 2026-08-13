@@ -1,15 +1,36 @@
 import { useTranslations, useLocale } from 'next-intl';
 import { TicketIcon, StarIcon, CupIcon, UserGroupIcon } from "@/components/ui/Icons";
 import { TicketCounts } from "@/types";
+import { useState, useEffect } from 'react'; // ✅ إضافة
 
 interface StatsSectionProps {
   counts: TicketCounts;
-  subscribers: number;
+  subscribers: number; // سنهمله ونستخدم العدد الحقيقي من API
 }
 
-export function StatsSection({ counts, subscribers }: StatsSectionProps) {
+export function StatsSection({ counts, subscribers: _subscribers }: StatsSectionProps) {
   const t = useTranslations('HomePage.stats');
   const locale = useLocale();
+
+  const [userCount, setUserCount] = useState(0);
+
+  // ✅ جلب عدد الأعضاء من قاعدة البيانات
+  useEffect(() => {
+    const fetchUserCount = async () => {
+      try {
+        const res = await fetch("/api/admin/users/count");
+        if (res.ok) {
+          const data = await res.json();
+          setUserCount(data.count || 0);
+        } else {
+          console.error("Failed to fetch user count");
+        }
+      } catch (error) {
+        console.error("Error fetching user count:", error);
+      }
+    };
+    fetchUserCount();
+  }, []);
 
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat(locale).format(num);
@@ -52,7 +73,7 @@ export function StatsSection({ counts, subscribers }: StatsSectionProps) {
             },
             {
               label: t('subscribers'),
-              value: formatNumber(subscribers),
+              value: formatNumber(userCount), // ✅ استخدم العدد الحقيقي
               icon: <span style={{ color: "#38bdf8" }}><UserGroupIcon className="w-8 h-8" /></span>,
               color: "#38bdf8",
               bg: "rgba(56, 189, 248, 0.1)",
