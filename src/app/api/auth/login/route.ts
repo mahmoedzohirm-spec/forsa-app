@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/db";
 import bcrypt from "bcryptjs";
+import { generateToken, setTokenCookie } from "@/lib/auth"; // ✅ استيراد الدوال الجديدة
 
 export async function POST(req: NextRequest) {
   try {
@@ -44,7 +45,14 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      // ✅ حذف كلمة المرور من الكائن
       delete user.password;
+
+      // ✅ توليد توكن JWT وحفظه في HttpOnly Cookie
+      const token = generateToken(user);
+      setTokenCookie(token);
+
+      // ✅ إرجاع البيانات مع نجاح العملية
       return NextResponse.json({ success: true, user });
     } finally {
       client.release();
