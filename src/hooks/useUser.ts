@@ -5,7 +5,6 @@ export const useUser = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // ✅ جلب المستخدم من الـ API (بدلاً من localStorage)
   const fetchUser = useCallback(async () => {
     try {
       const res = await fetch("/api/auth/me");
@@ -30,17 +29,17 @@ export const useUser = () => {
     fetchUser();
   }, [fetchUser]);
 
-  // ✅ تسجيل الدخول عبر API (يُخزن التوكن في HttpOnly Cookie)
-  const login = useCallback(async (u: User) => {
+  // ✅ تسجيل الدخول (إرسال email و password مباشرة)
+  const login = useCallback(async (email: string, password: string) => {
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user: u }),
+        body: JSON.stringify({ email, password }), // ✅ التعديل هنا
       });
       if (res.ok) {
-        setUser(u);
-        // إزالة أي بيانات قديمة من localStorage (لن نستخدمها بعد الآن)
+        const data = await res.json();
+        setUser(data.user);
         localStorage.removeItem("forsaUser");
         return true;
       }
@@ -50,7 +49,7 @@ export const useUser = () => {
     }
   }, []);
 
-  // ✅ تسجيل الخروج عبر API (يمسح الكوكي)
+  // ✅ تسجيل الخروج
   const logout = useCallback(async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
