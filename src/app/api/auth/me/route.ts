@@ -3,7 +3,7 @@ import { getTokenFromCookies, verifyToken } from '@/lib/auth';
 
 export async function GET() {
   try {
-    const token = getTokenFromCookies();
+    const token = await getTokenFromCookies(); 
     if (!token) {
       return NextResponse.json({ user: null }, { status: 200 });
     }
@@ -13,7 +13,6 @@ export async function GET() {
       return NextResponse.json({ user: null }, { status: 200 });
     }
 
-    // هنا يمكنك جلب بيانات المستخدم الكاملة من قاعدة البيانات إذا أردت
     return NextResponse.json({ user: decoded });
   } catch (error) {
     return NextResponse.json({ user: null }, { status: 200 });
