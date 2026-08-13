@@ -1,11 +1,33 @@
 import { useTranslations } from 'next-intl';
 import { TrophyIcon } from "@/components/ui/Icons";
 import { AppSettings } from "@/types";
-import { QRCodeSVG } from 'qrcode.react'; // ✅ إضافة الباركود
+import { QRCodeSVG } from 'qrcode.react';
 
 export function Footer({ settings }: { settings: AppSettings }) {
   const t = useTranslations('HomePage.footer');
   const siteUrl = process.env.NEXTAUTH_URL || 'https://forsa-app-ten.vercel.app';
+
+  // ✅ دالة المشاركة
+  const handleShare = async () => {
+    const shareData = {
+      title: settings.site_name || 'فرصة العمر',
+      text: 'انضم إلى منصة السحوبات واربح جوائز قيمة!',
+      url: siteUrl,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(siteUrl);
+        alert('تم نسخ الرابط، شاركه مع أصدقائك!');
+      }
+    } catch (error) {
+      if (error instanceof Error && error.name !== 'AbortError') {
+        console.error('Share error:', error);
+      }
+    }
+  };
 
   return (
     <footer
@@ -54,32 +76,67 @@ export function Footer({ settings }: { settings: AppSettings }) {
         </a>
       </p>
 
-      {/* ✅ باركود (QR Code) لسهولة مشاركة التطبيق */}
+      {/* ✅ الباركود + زر المشاركة جنب بعض */}
       <div
         style={{
           display: "flex",
-          justifyContent: "center",
-          marginTop: "20px",
-          padding: "12px",
-          background: "rgba(255,255,255,0.05)",
-          borderRadius: "12px",
-          maxWidth: "200px",
-          marginLeft: "auto",
-          marginRight: "auto",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "12px",
+          marginTop: "12px",
         }}
       >
-        <QRCodeSVG
-          value={siteUrl}
-          size={120}
-          bgColor="transparent"
-          fgColor="#fbbf24"
-          level="H"
-          includeMargin={false}
-        />
+        {/* الباركود */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            padding: "12px",
+            background: "rgba(0,0,0,0.3)",
+            borderRadius: "16px",
+            maxWidth: "200px",
+            marginLeft: "auto",
+            marginRight: "auto",
+          }}
+        >
+          <QRCodeSVG
+            value={siteUrl}
+            size={140}
+            bgColor="rgba(0,0,0,0)"
+            fgColor="#fbbf24"
+            level="H"
+            includeMargin={false}
+          />
+        </div>
+
+        {/* ✅ زر مشاركة التطبيق */}
+        <button
+          onClick={handleShare}
+          style={{
+            padding: "12px 28px",
+            borderRadius: "50px",
+            fontSize: "16px",
+            fontWeight: "700",
+            fontFamily: "Cairo, Inter, sans-serif",
+            background: "rgba(245,158,11,0.15)",
+            border: "2px solid rgba(245,158,11,0.5)",
+            color: "#fbbf24",
+            cursor: "pointer",
+            transition: "all 0.3s",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+          }}
+          onMouseEnter={(e) => {
+            (e.target as HTMLButtonElement).style.background = "rgba(245,158,11,0.3)";
+          }}
+          onMouseLeave={(e) => {
+            (e.target as HTMLButtonElement).style.background = "rgba(245,158,11,0.15)";
+          }}
+        >
+          <span>📤</span> مشاركة التطبيق
+        </button>
       </div>
-      <p style={{ color: "#6b7280", fontSize: "11px", marginTop: "8px", opacity: 0.7 }}>
-        {t('scan_to_visit') || 'امسح الباركود لزيارة المنصة'}
-      </p>
     </footer>
   );
 }
