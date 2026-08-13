@@ -3,28 +3,64 @@ import { User } from "@/types";
 
 export const useUser = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const saved = localStorage.getItem("forsaUser");
-    if (saved) {
-      try {
-        setUser(JSON.parse(saved));
-      } catch {
-        // Ignore
+  // ✅ جلب المستخدم من الـ API (بدلاً من localStorage)
+  const fetchUser = useCallback(async () => {
+    try {
+      const res = await fetch("/api/auth/me");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.user) {
+          setUser(data.user);
+        } else {
+          setUser(null);
+        }
+      } else {
+        setUser(null);
       }
+    } catch {
+      setUser(null);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
-  const login = useCallback((u: User) => {
-    setUser(u);
-    localStorage.setItem("forsaUser", JSON.stringify(u));
+  useEffect(() => {
+    fetchUser();
+  }, [fetchUser]);
+
+  // ✅ تسجيل الدخول عبر API (يُخزن التوكن في HttpOnly Cookie)
+  const login = useCallback(async (u: User) => {
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user: u }),
+      });
+      if (res.ok) {
+        setUser(u);
+        // إزالة أي بيانات قديمة من localStorage (لن نستخدمها بعد الآن)
+        localStorage.removeItem("forsaUser");
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
   }, []);
 
-  const logout = useCallback(() => {
-    setUser(null);
-    localStorage.removeItem("forsaUser");
-    document.cookie = "user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+  // ✅ تسجيل الخروج عبر API (يمسح الكوكي)
+  const logout = useCallback(async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      setUser(null);
+      localStorage.removeItem("forsaUser");
+      document.cookie = "user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    } catch {
+      // Ignore
+    }
   }, []);
 
-  return { user, setUser, login, logout };
+  return { user, setUser, login, logout, loading };
 };
