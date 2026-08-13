@@ -29,6 +29,8 @@ export interface PaymentMethod {
   iban?: string;
   bank_name?: string;
   account_holder?: string;
+    phone_number?: string;
+  created_at?: string;
 }
 
 export interface Prize {
