@@ -46,9 +46,8 @@ export async function POST(req: NextRequest) {
 
       delete user.password;
 
-      // ✅ توليد التوكن وحفظه في كوكي HttpOnly
       const token = generateToken(user);
-      setTokenCookie(token);
+      await setTokenCookie(token);
 
       return NextResponse.json({ success: true, user });
     } finally {
