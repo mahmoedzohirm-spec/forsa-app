@@ -5,7 +5,7 @@ import { AppSettings } from "@/types";
 interface HeroSectionProps {
   settings: AppSettings;
   ticketPrice: string;
-  currency: string; // لن نستخدمه، سنأخذ العملة من الترجمة
+  currency: string;
   user: any;
   onLogin: () => void;
   scrollToTickets: () => void;
@@ -25,6 +25,29 @@ export function HeroSection({
 
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat(locale).format(num);
+  };
+
+  // ✅ دالة المشاركة (Share)
+  const handleShare = async () => {
+    const shareData = {
+      title: settings.site_name || 'فرصة العمر',
+      text: t('share_text') || 'انضم إلى منصة السحوبات واربح جوائز قيمة!',
+      url: typeof window !== 'undefined' ? window.location.href : 'https://forsa-app-ten.vercel.app',
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        // نسخ الرابط إلى الحافظة للمتصفحات التي لا تدعم Web Share API
+        await navigator.clipboard.writeText(shareData.url);
+        alert(t('share_copied') || 'تم نسخ الرابط، شاركه مع أصدقائك!');
+      }
+    } catch (error) {
+      if (error instanceof Error && error.name !== 'AbortError') {
+        console.error('Share error:', error);
+      }
+    }
   };
 
   return (
@@ -62,6 +85,30 @@ export function HeroSection({
             onMouseLeave={(e) => { (e.target as HTMLButtonElement).style.background = "transparent"; (e.target as HTMLButtonElement).style.borderColor = "rgba(245,158,11,0.5)"; }}
           >
             {t('button_prizes')}
+          </button>
+
+          {/* ✅ زر المشاركة (Share) */}
+          <button
+            onClick={handleShare}
+            style={{
+              padding: "16px 36px",
+              borderRadius: "50px",
+              fontSize: "18px",
+              fontWeight: "800",
+              fontFamily: "Cairo, Inter, sans-serif",
+              background: "rgba(124,58,237,0.2)",
+              border: "2px solid rgba(124,58,237,0.5)",
+              color: "#c4b5fd",
+              cursor: "pointer",
+              transition: "all 0.3s",
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+            }}
+            onMouseEnter={(e) => { (e.target as HTMLButtonElement).style.background = "rgba(124,58,237,0.4)"; }}
+            onMouseLeave={(e) => { (e.target as HTMLButtonElement).style.background = "rgba(124,58,237,0.2)"; }}
+          >
+            <span>📤</span> {t('button_share') || 'مشاركة'}
           </button>
         </div>
       </div>
