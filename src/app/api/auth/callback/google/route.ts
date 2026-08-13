@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/db";
-import { generateToken, setTokenCookie } from "@/lib/auth";
+import { cookies } from "next/headers";
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
@@ -22,7 +22,6 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // 1. الحصول على access_token
     const tokenResponse = await fetch(
       "https://oauth2.googleapis.com/token",
       {
@@ -48,7 +47,6 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // 2. جلب بيانات المستخدم
     const userInfoResponse = await fetch(
       "https://www.googleapis.com/oauth2/v2/userinfo",
       {
@@ -66,7 +64,6 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // 3. البحث عن المستخدم أو إنشاؤه
     const client = await pool.connect();
     try {
       const existingUser = await client.query(
@@ -95,16 +92,17 @@ export async function GET(req: NextRequest) {
         console.log("✅ Existing user found:", userData.email);
       }
 
-      // ✅ 4. توليد توكن JWT وحفظه في كوكي HttpOnly (بدلاً من كوكي user العادي)
-      const token = generateToken(userData);
-      await setTokenCookie(token);
+      // الكوكي القديم
+      const cookieStore = cookies();
+      cookieStore.set("user", JSON.stringify(userData), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24 * 7,
+        path: "/",
+      });
 
-      // ✅ 5. حذف الكوكي القديم (user) إذا كان موجوداً
-      const response = NextResponse.redirect(`${process.env.NEXTAUTH_URL}/`);
-      response.cookies.delete("user");
-
-      console.log("✅ JWT token set for user:", userData.email);
-      return response;
+      return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/`);
     } catch (dbError) {
       console.error("Database error during Google login:", dbError);
       return NextResponse.redirect(
