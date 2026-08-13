@@ -29,7 +29,6 @@ const AdminDashboard = dynamic(
 );
 
 export default function HomePage() {
-  // ✅ إضافة loading من useUser المعدل
   const { user, login, logout, setUser, loading: userLoading } = useUser();
   const { tickets, counts, subscribers, loading: ticketsLoading, loadTickets } = useTickets();
   const { settings, prizes, loading: settingsLoading, loadSettingsAndPrizes } = useSettings();
@@ -63,12 +62,9 @@ export default function HomePage() {
     showToastRef.current = showToast;
   });
 
-  // ✅ حذف parseCookieValue (لم نعد بحاجة له)
-
-  // ✅ استبدال useEffect القديم بـ useEffect فارغ (لأن useUser يدير الحالة الآن)
+  // ✅ useUser يدير حالة المستخدم عبر API
   useEffect(() => {
     // لم نعد بحاجة للتحقق من localStorage أو cookies يدوياً
-    // useUser يقوم بجلب المستخدم عبر /api/auth/me
   }, []);
 
   useEffect(() => {
@@ -131,18 +127,18 @@ export default function HomePage() {
     });
   }, [user]);
 
-  // ✅ تعديل handleLogin ليكون async ويستخدم login الجديدة
-  const handleLogin = async (u: any) => {
-    const success = await login(u);
+  // ✅ دالة handleLogin المعدلة: تستقبل email و password
+  const handleLogin = async (email: string, password: string) => {
+    const success = await login(email, password);
     if (success) {
       showToast("👋 مرحباً! تم تسجيل الدخول بنجاح.");
-      if (u.is_admin) setShowDashboard(true);
+      // بعد تسجيل الدخول، user محدث، نتحقق من is_admin
+      if (user?.is_admin) setShowDashboard(true);
     } else {
       showToast("❌ حدث خطأ أثناء تسجيل الدخول.");
     }
   };
 
-  // ✅ تعديل handleLogout (إزالة document.cookie لأن logout يديرها)
   const handleLogout = useCallback(() => {
     logout();
     setShowDashboard(false);
@@ -173,7 +169,6 @@ export default function HomePage() {
     setSelectedTicket({ multiple: true, numbers: ticketNumbers });
   };
 
-  // ✅ إضافة userLoading إلى شرط التحميل
   if (!initialized || settingsLoading || userLoading) {
     return (
       <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #0f0a1c 0%, #080510 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: "20px" }}>
