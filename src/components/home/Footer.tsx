@@ -76,13 +76,14 @@ export function Footer({ settings }: { settings: AppSettings }) {
         </a>
       </p>
 
-      {/* ✅ الباركود + زر المشاركة جنب بعض */}
+      {/* ✅ الباركود + زر المشاركة جنب بعض (صف واحد) */}
       <div
         style={{
           display: "flex",
-          flexDirection: "column",
           alignItems: "center",
-          gap: "12px",
+          justifyContent: "center",
+          gap: "24px",
+          flexWrap: "wrap",
           marginTop: "12px",
         }}
       >
@@ -91,12 +92,9 @@ export function Footer({ settings }: { settings: AppSettings }) {
           style={{
             display: "flex",
             justifyContent: "center",
-            padding: "12px",
+            padding: "10px",
             background: "rgba(0,0,0,0.3)",
             borderRadius: "16px",
-            maxWidth: "200px",
-            marginLeft: "auto",
-            marginRight: "auto",
           }}
         >
           <QRCodeSVG
@@ -109,11 +107,11 @@ export function Footer({ settings }: { settings: AppSettings }) {
           />
         </div>
 
-        {/* ✅ زر مشاركة التطبيق */}
+        {/* ✅ زر مشاركة التطبيق جنب الباركود */}
         <button
           onClick={handleShare}
           style={{
-            padding: "12px 28px",
+            padding: "14px 28px",
             borderRadius: "50px",
             fontSize: "16px",
             fontWeight: "700",
@@ -126,6 +124,7 @@ export function Footer({ settings }: { settings: AppSettings }) {
             display: "flex",
             alignItems: "center",
             gap: "10px",
+            whiteSpace: "nowrap",
           }}
           onMouseEnter={(e) => {
             (e.target as HTMLButtonElement).style.background = "rgba(245,158,11,0.3)";
