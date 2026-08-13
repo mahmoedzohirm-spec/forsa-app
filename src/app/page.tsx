@@ -127,12 +127,12 @@ export default function HomePage() {
     });
   }, [user]);
 
-  // ✅ دالة handleLogin المعدلة: تستقبل email و password
-  const handleLogin = async (email: string, password: string) => {
-    const success = await login(email, password);
+  // ✅ دالة handleLogin المعدلة: تستقبل كائن user من AuthModal
+  const handleLogin = async (userData: { email: string; password: string }) => {
+    const success = await login(userData.email, userData.password);
     if (success) {
       showToast("👋 مرحباً! تم تسجيل الدخول بنجاح.");
-      // بعد تسجيل الدخول، user محدث، نتحقق من is_admin
+      // بعد تسجيل الدخول، نستخدم user من useUser (الذي تم تحديثه)
       if (user?.is_admin) setShowDashboard(true);
     } else {
       showToast("❌ حدث خطأ أثناء تسجيل الدخول.");
