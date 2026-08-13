@@ -3,63 +3,28 @@ import { User } from "@/types";
 
 export const useUser = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const fetchUser = useCallback(async () => {
-    try {
-      const res = await fetch("/api/auth/me");
-      if (res.ok) {
-        const data = await res.json();
-        if (data.user) {
-          setUser(data.user);
-        } else {
-          setUser(null);
-        }
-      } else {
-        setUser(null);
-      }
-    } catch {
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
 
   useEffect(() => {
-    fetchUser();
-  }, [fetchUser]);
-
-  // ✅ تسجيل الدخول (إرسال email و password مباشرة)
-  const login = useCallback(async (email: string, password: string) => {
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }), // ✅ التعديل هنا
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setUser(data.user);
-        localStorage.removeItem("forsaUser");
-        return true;
+    const saved = localStorage.getItem("forsaUser");
+    if (saved) {
+      try {
+        setUser(JSON.parse(saved));
+      } catch {
+        // Ignore
       }
-      return false;
-    } catch {
-      return false;
     }
   }, []);
 
-  // ✅ تسجيل الخروج
-  const logout = useCallback(async () => {
-    try {
-      await fetch("/api/auth/logout", { method: "POST" });
-      setUser(null);
-      localStorage.removeItem("forsaUser");
-      document.cookie = "user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    } catch {
-      // Ignore
-    }
+  const login = useCallback((u: User) => {
+    setUser(u);
+    localStorage.setItem("forsaUser", JSON.stringify(u));
   }, []);
 
-  return { user, setUser, login, logout, loading };
+  const logout = useCallback(() => {
+    setUser(null);
+    localStorage.removeItem("forsaUser");
+    document.cookie = "user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+  }, []);
+
+  return { user, setUser, login, logout };
 };
