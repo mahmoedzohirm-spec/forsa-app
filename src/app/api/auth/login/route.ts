@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/db";
 import bcrypt from "bcryptjs";
-import { generateToken, setTokenCookie } from "@/lib/auth"; // ✅ استيراد الدوال الجديدة
+import { generateToken, setTokenCookie } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,7 +15,6 @@ export async function POST(req: NextRequest) {
 
     const client = await pool.connect();
     try {
-      // البحث باستخدام البريد الإلكتروني أو اسم المستخدم
       const result = await client.query(
         `SELECT id, name, email, phone, is_admin, is_banned, created_at, password 
          FROM users 
@@ -45,14 +44,12 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // ✅ حذف كلمة المرور من الكائن
       delete user.password;
 
-      // ✅ توليد توكن JWT وحفظه في HttpOnly Cookie
+      // ✅ توليد التوكن وحفظه في كوكي HttpOnly
       const token = generateToken(user);
       setTokenCookie(token);
 
-      // ✅ إرجاع البيانات مع نجاح العملية
       return NextResponse.json({ success: true, user });
     } finally {
       client.release();
