@@ -29,7 +29,6 @@ const AdminDashboard = dynamic(
 );
 
 export default function HomePage() {
-  // ✅ التعديل: إضافة loadMore, hasMore, total من useTickets
   const {
     user,
     login,
@@ -184,8 +183,9 @@ export default function HomePage() {
     }
   }, []);
 
+  // ✅ التعديل: جلب سجل السحب فقط إذا كان المستخدم مسؤولاً
   useEffect(() => {
-    if (initialized) {
+    if (initialized && user?.is_admin) {
       fetch("/api/admin/draw")
         .then((res) => res.json())
         .then((data) => {
@@ -195,7 +195,7 @@ export default function HomePage() {
         })
         .catch((err) => console.error("Error fetching draw history:", err));
     }
-  }, [initialized]);
+  }, [initialized, user]);
 
   useEffect(() => {
     if (user) {
@@ -518,7 +518,6 @@ export default function HomePage() {
             }
           }}
           onSelectMultipleTickets={handleSelectMultipleTickets}
-          // ✅ إضافة الخصائص الجديدة
           total={total}
           hasMore={hasMore}
           onLoadMore={loadMore}
