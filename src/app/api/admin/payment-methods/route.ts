@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { pool } from "@/db";
-import { getTokenFromCookies, verifyToken } from "@/lib/auth";
+import { pool } from "@/db"; 
+import { getTokenFromCookies, verifyToken } from "@/lib/auth";  
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +11,7 @@ export async function GET() {
   }
   const decoded = verifyToken(token);
   if (!decoded?.is_admin) {
-    return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
+    return NextResponse.json({ error: "صلاحيات غير كافية" }, { status: 403 });
   }
 
   try {
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
   }
   const decoded = verifyToken(token);
   if (!decoded?.is_admin) {
-    return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
+    return NextResponse.json({ error: "صلاحيات غير كافية" }, { status: 403 });
   }
 
   try {
@@ -80,7 +80,7 @@ export async function PUT(req: NextRequest) {
   }
   const decoded = verifyToken(token);
   if (!decoded?.is_admin) {
-    return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
+    return NextResponse.json({ error: "صلاحيات غير كافية" }, { status: 403 });
   }
 
   try {
@@ -120,7 +120,7 @@ export async function DELETE(req: NextRequest) {
   }
   const decoded = verifyToken(token);
   if (!decoded?.is_admin) {
-    return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
+    return NextResponse.json({ error: "صلاحيات غير كافية" }, { status: 403 });
   }
 
   try {
