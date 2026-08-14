@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/db";
 import { sendPushNotification } from "@/lib/firebase-admin";
-import { getTokenFromCookies, verifyToken } from "@/lib/auth"; // ✅ إضافة
+import { getTokenFromCookies, verifyToken } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
-  // ✅ التحقق من الصلاحيات
   const token = await getTokenFromCookies();
+  if (!token) {
+    return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
+  }
   const decoded = verifyToken(token);
   if (!decoded?.is_admin) {
     return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
@@ -23,7 +25,6 @@ export async function POST(req: NextRequest) {
 
     const client = await pool.connect();
     try {
-      // 1️⃣ جلب جميع المستخدمين النشطين
       const usersResult = await client.query(
         "SELECT id, push_token FROM users WHERE is_banned = FALSE"
       );
@@ -35,7 +36,6 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // 2️⃣ إدراج إشعار لكل مستخدم (دفعة واحدة)
       const insertPromises = usersResult.rows.map((user) => {
         return client.query(
           `INSERT INTO notifications (user_id, title, message, type, data)
@@ -45,7 +45,6 @@ export async function POST(req: NextRequest) {
       });
       await Promise.all(insertPromises);
 
-      // 3️⃣ إرسال إشعارات الدفع (Push) لكل مستخدم لديه token
       const pushPromises = usersResult.rows
         .filter((user) => user.push_token)
         .map((user) => {
