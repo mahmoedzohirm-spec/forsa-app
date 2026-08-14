@@ -4,7 +4,7 @@ import { getTokenFromCookies, verifyToken } from "@/lib/auth";
 
 export const dynamic = 'force-dynamic';
 
-// ✅ GET عام (بدون تحقق)
+// ✅ GET عام (بدون تحقق من الصلاحيات)
 export async function GET() {
   try {
     const client = await pool.connect();
@@ -27,7 +27,7 @@ export async function GET() {
   }
 }
 
-// ✅ POST محمي
+// ✅ POST محمي (يتطلب صلاحيات Admin)
 export async function POST(req: NextRequest) {
   const token = await getTokenFromCookies();
   if (!token) {
@@ -37,6 +37,7 @@ export async function POST(req: NextRequest) {
   if (!decoded?.is_admin) {
     return NextResponse.json({ error: "صلاحيات غير كافية" }, { status: 403 });
   }
+
   try {
     const { settings } = await req.json();
     const client = await pool.connect();
