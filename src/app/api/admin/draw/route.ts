@@ -1,15 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/db";
+import { getTokenFromCookies, verifyToken } from "@/lib/auth"; // ✅ إضافة
 
 export async function GET() {
+  // ✅ التحقق من الصلاحيات
+  const token = await getTokenFromCookies();
+  const decoded = verifyToken(token);
+  if (!decoded?.is_admin) {
+    return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
+  }
+
   try {
     const client = await pool.connect();
     try {
-      // جلب البطاقات المباعة (مع LIMIT للأمان)
       const tickets = await client.query(
         "SELECT number, user_name, contact_phone FROM tickets WHERE status = 'sold' ORDER BY number ASC LIMIT 5000"
       );
-      // جلب آخر 20 سحب
       const history = await client.query(
         "SELECT * FROM draw_history ORDER BY drawn_at DESC LIMIT 20"
       );
@@ -28,6 +34,13 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  // ✅ التحقق من الصلاحيات
+  const token = await getTokenFromCookies();
+  const decoded = verifyToken(token);
+  if (!decoded?.is_admin) {
+    return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
+  }
+
   try {
     const { prize, ticketNumber, winnerName, winnerPhone } = await req.json();
     const client = await pool.connect();
