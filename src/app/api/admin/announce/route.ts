@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { pool } from "@/db";
+import { pool } from "@/db"; // ✅ مسار صحيح
 import { sendPushNotification } from "@/lib/firebase-admin";
-import { getTokenFromCookies, verifyToken } from "@/lib/auth";
+import { getTokenFromCookies, verifyToken } from "@/lib/auth"; // ✅ مسار صحيح
 
 export async function POST(req: NextRequest) {
   const token = await getTokenFromCookies();
@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
   }
   const decoded = verifyToken(token);
   if (!decoded?.is_admin) {
-    return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
+    return NextResponse.json({ error: "صلاحيات غير كافية" }, { status: 403 });
   }
 
   try {
