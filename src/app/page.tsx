@@ -169,8 +169,9 @@ export default function HomePage() {
     }
   }, []);
 
+  // ✅ جلب سجل السحب (متاح للجميع)
   useEffect(() => {
-    if (initialized && user?.is_admin) {
+    if (initialized) {
       fetch("/api/admin/draw")
         .then((res) => res.json())
         .then((data) => {
@@ -179,10 +180,8 @@ export default function HomePage() {
           }
         })
         .catch((err) => console.error("Error fetching draw history:", err));
-    } else {
-      setRecentWinners([]);
     }
-  }, [initialized, user]);
+  }, [initialized]);
 
   useEffect(() => {
     if (user) {
