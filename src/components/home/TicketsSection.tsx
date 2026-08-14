@@ -20,6 +20,10 @@ interface TicketsSectionProps {
   filteredTickets: Ticket[];
   onSelectTicket: (ticket: Ticket) => void;
   onSelectMultipleTickets: (ticketNumbers: number[]) => void;
+  // ✅ خصائص Pagination الجديدة
+  total?: number;
+  hasMore?: boolean;
+  onLoadMore?: () => void;
 }
 
 export function TicketsSection({
@@ -39,6 +43,9 @@ export function TicketsSection({
   filteredTickets,
   onSelectTicket,
   onSelectMultipleTickets,
+  total = 0,
+  hasMore = false,
+  onLoadMore,
 }: TicketsSectionProps) {
   const t = useTranslations('HomePage.tickets');
   const locale = useLocale();
@@ -62,10 +69,8 @@ export function TicketsSection({
   const handleManualSelect = (ticketNumber: number) => {
     setSelectedTickets((prev) => {
       if (prev.includes(ticketNumber)) {
-        // إلغاء تحديد البطاقة
         return prev.filter((num) => num !== ticketNumber);
       } else {
-        // تحديد البطاقة (مع التحقق من الحد الأقصى 500)
         if (prev.length >= 500) {
           alert("⚠️ لا يمكنك اختيار أكثر من 500 بطاقة");
           return prev;
@@ -75,7 +80,7 @@ export function TicketsSection({
     });
   };
 
-  // ===== دالة تحديد ألوان البطاقة (تعتمد فقط على الحالة) =====
+  // ===== دالة تحديد ألوان البطاقة =====
   const getTicketStyle = (ticket: Ticket) => {
     switch (ticket.status) {
       case "available":
@@ -133,7 +138,7 @@ export function TicketsSection({
           )}
         </div>
 
-        {/* الفلاتر والبحث */}
+        {/* الفلاتر والبحث (نفس الكود القديم) */}
         <div
           style={{
             background: "rgba(30, 20, 53, 0.6)",
@@ -255,7 +260,7 @@ export function TicketsSection({
           </div>
         </div>
 
-        {/* ===== Multi-select toolbar (معدل) ===== */}
+        {/* ===== Multi-select toolbar (نفس الكود القديم) ===== */}
         <div
           style={{
             background: "rgba(30, 20, 53, 0.6)",
@@ -352,7 +357,7 @@ export function TicketsSection({
           )}
         </div>
 
-        {/* شبكة البطاقات */}
+        {/* شبكة البطاقات (نفس الكود القديم) */}
         {loading ? (
           <SkeletonTicketGrid />
         ) : (
@@ -368,12 +373,10 @@ export function TicketsSection({
                   <div
                     key={t.number}
                     onClick={() => {
-                      // ✅ وضع الاختيار المتعدد + البطاقة متاحة
                       if (multiSelectMode && t.status === "available") {
                         handleManualSelect(t.number);
                         return;
                       }
-                      // الوضع العادي (اختيار بطاقة واحدة)
                       if (isClickable && !multiSelectMode) {
                         onSelectTicket(t);
                       }
@@ -442,20 +445,38 @@ export function TicketsSection({
               })}
             </div>
 
-            {!search && filteredTickets.length > visibleCount && (
+            {/* ✅ زر تحميل المزيد الجديد (باستخدام Props) */}
+            {!loading && (
               <div style={{ textAlign: "center", marginTop: "32px" }}>
-                <button
-                  onClick={() => setVisibleCount(visibleCount + 300)}
-                  className="btn-purple"
-                  style={{
-                    padding: "12px 32px",
-                    borderRadius: "50px",
-                    fontSize: "15px",
-                    fontFamily: "Cairo, Inter, sans-serif",
-                  }}
-                >
-                  {t('load_more', { remaining: formatNumber(remainingCount) })}
-                </button>
+                {hasMore ? (
+                  <button
+                    onClick={onLoadMore}
+                    style={{
+                      padding: "12px 32px",
+                      borderRadius: "50px",
+                      fontSize: "16px",
+                      fontWeight: "700",
+                      fontFamily: "Cairo, Inter, sans-serif",
+                      background: "rgba(124,58,237,0.2)",
+                      border: "2px solid rgba(124,58,237,0.4)",
+                      color: "#c4b5fd",
+                      cursor: "pointer",
+                      transition: "all 0.3s",
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.target as HTMLButtonElement).style.background = "rgba(124,58,237,0.4)";
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.target as HTMLButtonElement).style.background = "rgba(124,58,237,0.2)";
+                    }}
+                  >
+                    📥 تحميل المزيد ({filteredTickets.length} / {total})
+                  </button>
+                ) : (
+                  <p style={{ color: "#6b7280", fontSize: "14px" }}>
+                    ✅ تم تحميل جميع البطاقات ({total})
+                  </p>
+                )}
               </div>
             )}
 
