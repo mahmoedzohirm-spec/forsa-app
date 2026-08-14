@@ -12,6 +12,10 @@ const adminRoutes = [
   '/api/admin/settings',
   '/api/admin/users',
   '/api/admin/tickets',
+   '/api/admin/tickets/approve',        
+  '/api/admin/tickets/reject',        
+  '/api/admin/tickets/approve-batch', 
+  '/api/admin/tickets/reject-batch',
 ];
 
 export async function middleware(request: NextRequest) {
