@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/db";
+import { getTokenFromCookies, verifyToken } from "@/lib/auth"; // ✅ إضافة
 
 export async function GET() {
+  // ✅ التحقق من الصلاحيات
+  const token = await getTokenFromCookies();
+  const decoded = verifyToken(token);
+  if (!decoded?.is_admin) {
+    return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
+  }
+
   try {
     const client = await pool.connect();
     try {
@@ -25,6 +33,13 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  // ✅ التحقق من الصلاحيات
+  const token = await getTokenFromCookies();
+  const decoded = verifyToken(token);
+  if (!decoded?.is_admin) {
+    return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
+  }
+
   try {
     const { schedule } = await req.json();
 
@@ -37,7 +52,6 @@ export async function POST(req: NextRequest) {
 
     const client = await pool.connect();
     try {
-      // حفظ الموعد
       await client.query(
         `INSERT INTO app_settings (key, value)
          VALUES ('draw_schedule', $1)
@@ -45,12 +59,10 @@ export async function POST(req: NextRequest) {
         [schedule]
       );
 
-      // جلب جميع المستخدمين المسجلين
       const usersResult = await client.query(
         "SELECT id FROM users WHERE is_banned = FALSE"
       );
 
-      // إرسال إشعار جماعي لكل مستخدم
       const title = "📢 موعد السحب القادم";
       const message = `تم تحديد موعد السحب القادم في: ${new Date(schedule).toLocaleString("ar-SA")}`;
       const type = "draw_announcement";
