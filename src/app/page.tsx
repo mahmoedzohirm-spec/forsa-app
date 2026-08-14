@@ -29,22 +29,8 @@ const AdminDashboard = dynamic(
 );
 
 export default function HomePage() {
-  const {
-    user,
-    login,
-    logout,
-    setUser
-  } = useUser();
-  const {
-    tickets,
-    counts,
-    subscribers,
-    loading: ticketsLoading,
-    loadTickets,
-    loadMore,
-    hasMore,
-    total
-  } = useTickets();
+  const { user, login, logout, setUser } = useUser();
+  const { tickets, counts, subscribers, loading: ticketsLoading, loadTickets, loadMore, hasMore, total } = useTickets();
   const { settings, prizes, loading: settingsLoading, loadSettingsAndPrizes } = useSettings();
   const { toast, showToast } = useToast();
 
@@ -183,7 +169,7 @@ export default function HomePage() {
     }
   }, []);
 
-  // ✅ التعديل: جلب سجل السحب فقط إذا كان المستخدم مسؤولاً
+  // ✅ جلب سجل السحب فقط إذا كان المستخدم مسؤولاً
   useEffect(() => {
     if (initialized && user?.is_admin) {
       fetch("/api/admin/draw")
@@ -194,6 +180,9 @@ export default function HomePage() {
           }
         })
         .catch((err) => console.error("Error fetching draw history:", err));
+    } else {
+      // إذا لم يكن مسؤولاً، نضع مصفوفة فارغة
+      setRecentWinners([]);
     }
   }, [initialized, user]);
 
@@ -486,7 +475,7 @@ export default function HomePage() {
             scrollToTickets={scrollToTickets}
             setActiveSection={setActiveSection}
           />
-          <StatsSection counts={counts} subscribers={subscribers} />
+          <StatsSection counts={counts} subscribers={subscribers} user={user} />
           <HowItWorksSection ticketPrice={ticketPrice} />
         </>
       )}
