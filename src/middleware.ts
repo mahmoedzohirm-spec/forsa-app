@@ -21,6 +21,7 @@ const adminRoutes = [
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  const method = request.method; // ✅ الحصول على نوع الطلب
 
   // ============================================
   // 1️⃣ Rate Limiting (لجميع الطلبات)
@@ -57,7 +58,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // ============================================
-  // 2️⃣ حماية APIs الإدارية (نفس الكود القديم)
+  // 2️⃣ حماية APIs الإدارية (فقط لـ POST, PUT, DELETE)
   // ============================================
   const isAdminRoute = adminRoutes.some((route) => pathname.startsWith(route));
 
@@ -65,6 +66,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // ✅ استثناء طلبات GET (عامة للقراءة)
+  if (method === 'GET') {
+    return NextResponse.next();
+  }
+
+  // ✅ التحقق من الصلاحيات لـ POST, PUT, DELETE
   const token = await getTokenFromCookies();
   if (!token) {
     return NextResponse.json(
