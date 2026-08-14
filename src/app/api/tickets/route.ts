@@ -1,69 +1,64 @@
-import { NextRequest, NextResponse } from "next/server";
-import { pool } from "@/db";
+import { NextRequest, NextResponse } from 'next/server';
+import { pool } from '@/db';
 
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const status = searchParams.get("status");
-    const search = searchParams.get("search");
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = Math.min(parseInt(searchParams.get("limit") || "200"), 5000); // حد أقصى 1000
+    // استخراج page و limit من الـ URL
+    const searchParams = req.nextUrl.searchParams;
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '200');
     const offset = (page - 1) * limit;
 
     const client = await pool.connect();
     try {
-      // ✅ تمت إضافة booking_id إلى الاستعلام
-      let query = `SELECT id, number, status, user_id, user_name, user_phone, contact_phone, 
-                      payment_method, notes, rejection_reason, created_at, updated_at, booking_id
-               FROM tickets`;
-      const params: (string | number)[] = [];
-      const conditions: string[] = [];
+      // ✅ جلب البطاقات مع Pagination
+      const result = await client.query(
+        `SELECT id, number, status, user_name, user_phone, contact_phone, 
+                payment_method, notes, updated_at, user_id, receipt_image, booking_id
+         FROM tickets 
+         ORDER BY number ASC 
+         LIMIT $1 OFFSET $2`,
+        [limit, offset]
+      );
 
-      if (status && status !== "all") {
-        params.push(status);
-        conditions.push(`status = $${params.length}`);
-      }
-      if (search) {
-        params.push(parseInt(search) || 0);
-        conditions.push(`number = $${params.length}`);
-      }
+      // ✅ جلب العدد الإجمالي للبطاقات (لحساب عدد الصفحات)
+      const countResult = await client.query('SELECT COUNT(*) as total FROM tickets');
+      const total = parseInt(countResult.rows[0].total);
+      const totalPages = Math.ceil(total / limit);
 
-      if (conditions.length > 0) {
-        query += " WHERE " + conditions.join(" AND ");
-      }
-
-      query += " ORDER BY number ASC";
-      query += ` LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
-      params.push(limit, offset);
-
-      const result = await client.query(query, params);
-
-      // Get counts (محسّن)
-      const countsResult = await client.query(`
-        SELECT
+      // ✅ إحصائيات البطاقات (available, pending, sold)
+      const statsResult = await client.query(`
+        SELECT 
           COUNT(*) as total,
           COUNT(CASE WHEN status = 'available' THEN 1 END) as available,
           COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending,
           COUNT(CASE WHEN status = 'sold' THEN 1 END) as sold
         FROM tickets
       `);
-
-      // Get subscribers count (محسّن)
-      const subsResult = await client.query(
-        "SELECT COUNT(DISTINCT user_id) as count FROM tickets WHERE user_id IS NOT NULL"
-      );
+      const stats = statsResult.rows[0];
 
       return NextResponse.json({
         success: true,
         tickets: result.rows,
-        counts: countsResult.rows[0],
-        subscribers: subsResult.rows[0].count,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages,
+          hasMore: page < totalPages,
+        },
+        counts: {
+          total: stats.total || '0',
+          available: stats.available || '0',
+          pending: stats.pending || '0',
+          sold: stats.sold || '0',
+        },
       });
     } finally {
       client.release();
     }
   } catch (error) {
-    console.error("API /tickets error:", error);
+    console.error('API /tickets GET error:', error);
     return NextResponse.json(
       { success: false, error: String(error) },
       { status: 500 }
