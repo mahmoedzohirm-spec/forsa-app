@@ -1,36 +1,41 @@
 import { useTranslations, useLocale } from 'next-intl';
 import { TicketIcon, StarIcon, CupIcon, UserGroupIcon } from "@/components/ui/Icons";
-import { TicketCounts } from "@/types";
-import { useState, useEffect } from 'react'; // ✅ إضافة
+import { TicketCounts, User } from "@/types";
+import { useState, useEffect } from 'react';
 
 interface StatsSectionProps {
   counts: TicketCounts;
-  subscribers: number; // سنهمله ونستخدم العدد الحقيقي من API
+  subscribers: number;
+  user: User | null;
 }
 
-export function StatsSection({ counts, subscribers: _subscribers }: StatsSectionProps) {
+export function StatsSection({ counts, subscribers: _subscribers, user }: StatsSectionProps) {
   const t = useTranslations('HomePage.stats');
   const locale = useLocale();
 
   const [userCount, setUserCount] = useState(0);
 
-  // ✅ جلب عدد الأعضاء من قاعدة البيانات
+  // ✅ جلب عدد الأعضاء فقط إذا كان المستخدم مسؤولاً
   useEffect(() => {
-    const fetchUserCount = async () => {
-      try {
-        const res = await fetch("/api/admin/users/count");
-        if (res.ok) {
-          const data = await res.json();
-          setUserCount(data.count || 0);
-        } else {
-          console.error("Failed to fetch user count");
+    if (user?.is_admin) {
+      const fetchUserCount = async () => {
+        try {
+          const res = await fetch("/api/admin/users/count");
+          if (res.ok) {
+            const data = await res.json();
+            setUserCount(data.count || 0);
+          } else {
+            console.error("Failed to fetch user count");
+          }
+        } catch (error) {
+          console.error("Error fetching user count:", error);
         }
-      } catch (error) {
-        console.error("Error fetching user count:", error);
-      }
-    };
-    fetchUserCount();
-  }, []);
+      };
+      fetchUserCount();
+    } else {
+      setUserCount(0);
+    }
+  }, [user]);
 
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat(locale).format(num);
@@ -73,7 +78,7 @@ export function StatsSection({ counts, subscribers: _subscribers }: StatsSection
             },
             {
               label: t('subscribers'),
-              value: formatNumber(userCount), // ✅ استخدم العدد الحقيقي
+              value: formatNumber(userCount),
               icon: <span style={{ color: "#38bdf8" }}><UserGroupIcon className="w-8 h-8" /></span>,
               color: "#38bdf8",
               bg: "rgba(56, 189, 248, 0.1)",
