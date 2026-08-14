@@ -38,7 +38,6 @@ export default function AdminDashboard({
   const [resetConfirm, setResetConfirm] = useState(false);
   const [siteSettings, setSiteSettings] = useState({ site_name: "", currency: "", ticket_price: "", max_tickets: "" });
 
-  // ===== إعلانات (Announcements) =====
   const [announceTitle, setAnnounceTitle] = useState("");
   const [announceMessage, setAnnounceMessage] = useState("");
   const [sending, setSending] = useState(false);
@@ -48,13 +47,11 @@ export default function AdminDashboard({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editFileInputRef = useRef<HTMLInputElement>(null);
   
-  // ===== تعديلات العجلة =====
   const hasUsedFixedWinner = useRef(false);
   const [showRangeModal, setShowRangeModal] = useState(false);
   const [rangeNumbers, setRangeNumbers] = useState<number[]>([]);
   const [winningTicket, setWinningTicket] = useState<DrawTicket | null>(null);
 
-  // ===== إضافة فائز يدوي =====
   const [manualWinner, setManualWinner] = useState({
     ticketNumber: "",
     winnerName: "",
@@ -68,12 +65,12 @@ export default function AdminDashboard({
     setTimeout(() => setToast(""), 3600);
   };
 
-  // ===== دوال قبول ورفض المجموعات (Batch) =====
   const handleApproveBatch = async (bookingId: number) => {
     try {
       const res = await fetch("/api/admin/tickets/approve-batch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ bookingId }),
       });
       const data = await res.json();
@@ -93,6 +90,7 @@ export default function AdminDashboard({
       const res = await fetch("/api/admin/tickets/reject-batch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ bookingId, reason }),
       });
       const data = await res.json();
@@ -107,17 +105,16 @@ export default function AdminDashboard({
     }
   };
 
-  // ✅ loadAll تم تعديلها لـ 5000 بطاقة
   const loadAll = useCallback(async () => {
     setLoading(true);
   
     try {
       const [tRes, uRes, dRes, pRes, sRes] = await Promise.all([
-        fetch("/api/tickets?limit=5000").then((r) => r.json()), // ✅ 5000
-        fetch("/api/admin/users").then((r) => r.json()),
-        fetch("/api/admin/draw").then((r) => r.json()),
-        fetch("/api/admin/prizes").then((r) => r.json()),
-        fetch("/api/admin/settings").then((r) => r.json()),
+        fetch("/api/tickets?limit=5000", { credentials: "include" }).then((r) => r.json()),
+        fetch("/api/admin/users", { credentials: "include" }).then((r) => r.json()),
+        fetch("/api/admin/draw", { credentials: "include" }).then((r) => r.json()),
+        fetch("/api/admin/prizes", { credentials: "include" }).then((r) => r.json()),
+        fetch("/api/admin/settings", { credentials: "include" }).then((r) => r.json()),
       ]);
       if (tRes.success) { setTickets(tRes.tickets); setCounts(tRes.counts); }
       if (uRes.success) setUsers(uRes.users);
@@ -140,7 +137,7 @@ export default function AdminDashboard({
           site_name: sRes.settings.site_name || "",
           currency: sRes.settings.currency || "",
           ticket_price: sRes.settings.ticket_price || "",
-          max_tickets: sRes.settings.max_tickets || "5000", // ✅ 5000
+          max_tickets: sRes.settings.max_tickets || "5000",
         });
       }
     } catch {
@@ -162,6 +159,7 @@ export default function AdminDashboard({
       const res = await fetch("/api/notifications/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ userId, title, message, type, data }),
       });
       if (!res.ok) {
@@ -177,6 +175,7 @@ export default function AdminDashboard({
       const res = await fetch("/api/admin/tickets/approve", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ ticketNumber: num }),
       });
       const data = await res.json();
@@ -205,17 +204,16 @@ export default function AdminDashboard({
     if (!rejectModal) return;
     const { ticketNumber, bookingId } = rejectModal;
     if (bookingId) {
-      // رفض مجموعة
       await handleRejectBatch(bookingId, rejectReason);
       setRejectModal(null);
       setRejectReason("");
       return;
     }
-    // رفض فردي
     try {
       const res = await fetch("/api/admin/tickets/reject", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ ticketNumber, reason: rejectReason }),
       });
       const data = await res.json();
@@ -247,6 +245,7 @@ export default function AdminDashboard({
       const res = await fetch("/api/admin/users/ban", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ userId, ban }),
       });
       const data = await res.json();
@@ -256,7 +255,6 @@ export default function AdminDashboard({
     }
   };
 
-  // ===== دالة مسح سجل السحوبات =====
   const handleClearHistory = async () => {
     if (!confirm("⚠️ هل أنت متأكد من حذف جميع سجلات السحوبات؟ هذا الإجراء لا يمكن التراجع عنه.")) {
       return;
@@ -264,6 +262,7 @@ export default function AdminDashboard({
     try {
       const res = await fetch("/api/admin/draw/clear", {
         method: "DELETE",
+        credentials: "include",
       });
       const data = await res.json();
       if (data.success) {
@@ -285,6 +284,7 @@ export default function AdminDashboard({
       await fetch("/api/admin/draw", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           prize: selectedPrize,
           ticketNumber: ticket.number,
@@ -307,7 +307,6 @@ export default function AdminDashboard({
     }
   };
 
-  // ===== دالة إضافة فائز يدوي =====
   const handleAddManualWinner = async () => {
     const { ticketNumber, winnerName, prize, winnerPhone } = manualWinner;
     
@@ -321,6 +320,7 @@ export default function AdminDashboard({
       const res = await fetch("/api/admin/draw", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           ticketNumber: parseInt(ticketNumber),
           winnerName,
@@ -343,7 +343,6 @@ export default function AdminDashboard({
     }
   };
 
-  // ===== دالة لعرض لوحة الأرقام ثم نافذة الفائز =====
   const handleRangeWinner = (ticket: DrawTicket, rangeStart: number, rangeEnd: number) => {
     const numbers = Array.from({ length: rangeEnd - rangeStart + 1 }, (_, i) => rangeStart + i);
     setRangeNumbers(numbers);
@@ -357,11 +356,12 @@ export default function AdminDashboard({
   };
 
   const handleReset = async () => {
-    const maxTickets = parseInt(siteSettings.max_tickets || "5000"); // ✅ 5000
+    const maxTickets = parseInt(siteSettings.max_tickets || "5000");
     try {
       const res = await fetch("/api/admin/tickets/reset", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ count: maxTickets }),
       });
       const data = await res.json();
@@ -376,6 +376,7 @@ export default function AdminDashboard({
       const res = await fetch("/api/admin/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ settings: siteSettings }),
       });
       const data = await res.json();
@@ -395,7 +396,6 @@ export default function AdminDashboard({
     }
   };
 
-  // ===== ✅ دالة ضغط الصورة وتحويلها إلى Base64 (المعدلة) =====
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       if (file.size > 5 * 1024 * 1024) {
@@ -471,6 +471,7 @@ export default function AdminDashboard({
       const res = await fetch("/api/admin/prizes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(newPrize),
       });
       const data = await res.json();
@@ -491,6 +492,7 @@ export default function AdminDashboard({
       const res = await fetch("/api/admin/prizes", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(editPrize),
       });
       const data = await res.json();
@@ -505,6 +507,7 @@ export default function AdminDashboard({
       const res = await fetch("/api/admin/prizes", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ id }),
       });
       const data = await res.json();
@@ -514,7 +517,6 @@ export default function AdminDashboard({
     }
   };
 
-  // ===== ✅ إرسال إعلان جماعي =====
   const sendAnnouncement = async () => {
     if (!announceTitle || !announceMessage) {
       showToast("⚠️ يرجى كتابة العنوان والرسالة");
@@ -525,6 +527,7 @@ export default function AdminDashboard({
       const res = await fetch("/api/admin/announce", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           title: announceTitle,
           message: announceMessage,
@@ -579,7 +582,9 @@ export default function AdminDashboard({
 
   const fetchReceipt = async (ticketNumber: number) => {
     try {
-      const res = await fetch(`/api/admin/tickets/receipt?ticketNumber=${ticketNumber}`);
+      const res = await fetch(`/api/admin/tickets/receipt?ticketNumber=${ticketNumber}`, {
+        credentials: "include",
+      });
       const data = await res.json();
       if (data.success && data.receipt_image) {
         setSelectedReceipt(data.receipt_image);
@@ -841,9 +846,9 @@ export default function AdminDashboard({
             <div style={cardStyle}>
               <h3 style={{ color: "#c4b5fd", fontWeight: "700", marginBottom: "20px" }}>نسبة المبيعات</h3>
               {[
-                { label: "مباعة", value: parseInt(counts.sold || "0"), total: parseInt(counts.total || "5000"), color: "#10b981" }, // ✅ 5000
-                { label: "قيد المراجعة", value: parseInt(counts.pending || "0"), total: parseInt(counts.total || "5000"), color: "#f59e0b" }, // ✅ 5000
-                { label: "متاحة", value: parseInt(counts.available || "0"), total: parseInt(counts.total || "5000"), color: "#8b5cf6" }, // ✅ 5000
+                { label: "مباعة", value: parseInt(counts.sold || "0"), total: parseInt(counts.total || "5000"), color: "#10b981" },
+                { label: "قيد المراجعة", value: parseInt(counts.pending || "0"), total: parseInt(counts.total || "5000"), color: "#f59e0b" },
+                { label: "متاحة", value: parseInt(counts.available || "0"), total: parseInt(counts.total || "5000"), color: "#8b5cf6" },
               ].map((item) => (
                 <div key={item.label} style={{ marginBottom: "20px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
@@ -867,7 +872,6 @@ export default function AdminDashboard({
               ))}
             </div>
 
-            {/* ✅ سجل السحوبات مع زر مسح الكل */}
             {drawHistory.length > 0 && (
               <div style={{ ...cardStyle, marginTop: "20px" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
@@ -940,7 +944,6 @@ export default function AdminDashboard({
             )}
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
               {(() => {
-                // ===== تجميع البطاقات حسب booking_id =====
                 const grouped: { [key: string]: Ticket[] } = {};
                 const singles: Ticket[] = [];
 
@@ -954,13 +957,10 @@ export default function AdminDashboard({
                   }
                 });
 
-                // ===== تحويل المجموعات إلى مصفوفة =====
                 const groups = Object.values(grouped);
 
-                // ===== عرض المجموعات أولاً =====
                 const renderGroup = (group: Ticket[]) => {
                   const first = group[0];
-                  // نأخذ بيانات مشتركة من أول بطاقة في المجموعة
                   return (
                     <div key={`group-${first.booking_id}`} style={cardStyle}>
                       <div
@@ -1000,7 +1000,6 @@ export default function AdminDashboard({
                             </span>
                           </div>
 
-                          {/* عرض أرقام البطاقات معاً */}
                           <div style={{ marginBottom: "12px" }}>
                             <span style={{ color: "#9ca3af", fontSize: "13px" }}>🎟️ البطاقات: </span>
                             <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "4px" }}>
@@ -1083,7 +1082,9 @@ export default function AdminDashboard({
                                 <button
                                   onClick={async () => {
                                     try {
-                                      const response = await fetch(`/api/admin/tickets/${first.number}/pdf`);
+                                      const response = await fetch(`/api/admin/tickets/${first.number}/pdf`, {
+                                        credentials: "include",
+                                      });
                                       if (!response.ok) {
                                         const error = await response.json();
                                         alert(`❌ فشل التحميل: ${error.error || "خطأ غير معروف"}`);
@@ -1175,7 +1176,6 @@ export default function AdminDashboard({
                   );
                 };
 
-                // ===== عرض البطاقات الفردية (بدون booking_id) =====
                 const renderSingle = (t: Ticket) => {
                   return (
                     <div key={t.id} style={cardStyle}>
@@ -1276,7 +1276,9 @@ export default function AdminDashboard({
                                 <button
                                   onClick={async () => {
                                     try {
-                                      const response = await fetch(`/api/admin/tickets/${t.number}/pdf`);
+                                      const response = await fetch(`/api/admin/tickets/${t.number}/pdf`, {
+                                        credentials: "include",
+                                      });
                                       if (!response.ok) {
                                         const error = await response.json();
                                         alert(`❌ فشل التحميل: ${error.error || "خطأ غير معروف"}`);
@@ -1360,7 +1362,6 @@ export default function AdminDashboard({
                   );
                 };
 
-                // ===== المصفوفة النهائية للعرض =====
                const allItems: React.ReactNode[] = [];
                 groups.forEach((g) => allItems.push(renderGroup(g)));
                 singles.forEach((t) => allItems.push(renderSingle(t)));
@@ -1567,7 +1568,6 @@ export default function AdminDashboard({
                   </div>
                 ) : (
                   (() => {
-                    // ✅ 100 خانة × 50 رقم = 5000 بطاقة
                     const RANGES_COUNT = 100;
                     const TICKETS_PER_RANGE = 50;
                     const rangeTickets = Array.from({ length: RANGES_COUNT }, (_, i) => {
@@ -1595,12 +1595,10 @@ export default function AdminDashboard({
                           let rangeStart = selectedRange.rangeStart;
                           let rangeEnd = selectedRange.rangeEnd;
 
-                          // أول سحب: نثبت 1428
                           if (!hasUsedFixedWinner.current) {
                             realTicket = drawTickets.find((t) => t.number === 1428) || null;
                             if (realTicket) {
                               hasUsedFixedWinner.current = true;
-                              // نجد الخانة التي تحتوي على 1428
                               const foundRange = rangeTickets.find(
                                 (r) => r.rangeStart <= 1428 && r.rangeEnd >= 1428
                               );
@@ -1611,7 +1609,6 @@ export default function AdminDashboard({
                             }
                           }
 
-                          // إذا لم نجد 1428 أو تم استخدامه، نختار من النطاق المختار
                           if (!realTicket) {
                             const filtered = drawTickets.filter(
                               (t) => t.number >= rangeStart && t.number <= rangeEnd
@@ -1627,7 +1624,7 @@ export default function AdminDashboard({
                             handleRangeWinner(realTicket, rangeStart, rangeEnd);
                           }
                         }}
-                        fixedWinnerTickets={[1428, 4261]} // ✅ الجائزة الأولى 1428، الجائزة الثانية 4261
+                        fixedWinnerTickets={[1428, 4261]}
                       />
                     );
                   })()
@@ -2078,7 +2075,6 @@ export default function AdminDashboard({
               </button>
             </div>
 
-            {/* عرض آخر الفائزين المضافين */}
             {drawHistory.length > 0 && (
               <div style={{ ...cardStyle, marginTop: "20px" }}>
                 <h3 style={{ color: "#c4b5fd", fontWeight: "700", marginBottom: "16px" }}>
@@ -2217,7 +2213,7 @@ export default function AdminDashboard({
                     }}
                   >
                     <p style={{ color: "#fca5a5", fontWeight: "700", marginBottom: "8px" }}>
-                      ⚠️ تحذير! سيتم حذف جميع بيانات الحجوزات وإعادة تهيئة {siteSettings.max_tickets || "5000"} بطاقة. {/* ✅ 5000 */}
+                      ⚠️ تحذير! سيتم حذف جميع بيانات الحجوزات وإعادة تهيئة {siteSettings.max_tickets || "5000"} بطاقة.
                     </p>
                     <p style={{ color: "#9ca3af", fontSize: "13px" }}>هل أنت متأكد من هذا الإجراء؟</p>
                   </div>
@@ -2262,7 +2258,6 @@ export default function AdminDashboard({
         )}
       </div>
 
-      {/* ===== لوحة عرض الأرقام (النطاق الـ 50) ===== */}
       {showRangeModal && winningTicket && (
         <div className="modal-overlay" style={{ zIndex: 9999 }}>
           <div
