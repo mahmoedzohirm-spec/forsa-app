@@ -169,7 +169,6 @@ export default function HomePage() {
     }
   }, []);
 
-  // ✅ جلب سجل السحب فقط إذا كان المستخدم مسؤولاً
   useEffect(() => {
     if (initialized && user?.is_admin) {
       fetch("/api/admin/draw")
@@ -181,7 +180,6 @@ export default function HomePage() {
         })
         .catch((err) => console.error("Error fetching draw history:", err));
     } else {
-      // إذا لم يكن مسؤولاً، نضع مصفوفة فارغة
       setRecentWinners([]);
     }
   }, [initialized, user]);
