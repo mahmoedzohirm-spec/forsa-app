@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import dynamic from "next/dynamic";
-import Link from "next/link"; // ✅ استيراد Link
+import Link from "next/link";
 import { useUser } from "@/hooks/useUser";
 import { useTickets } from "@/hooks/useTickets";
 import NotificationBell from "@/components/ui/NotificationBell";
@@ -29,8 +29,23 @@ const AdminDashboard = dynamic(
 );
 
 export default function HomePage() {
-  const { user, login, logout, setUser } = useUser();
-  const { tickets, counts, subscribers, loading: ticketsLoading, loadTickets } = useTickets();
+  // ✅ التعديل: إضافة loadMore, hasMore, total من useTickets
+  const {
+    user,
+    login,
+    logout,
+    setUser
+  } = useUser();
+  const {
+    tickets,
+    counts,
+    subscribers,
+    loading: ticketsLoading,
+    loadTickets,
+    loadMore,
+    hasMore,
+    total
+  } = useTickets();
   const { settings, prizes, loading: settingsLoading, loadSettingsAndPrizes } = useSettings();
   const { toast, showToast } = useToast();
 
@@ -149,13 +164,11 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, []);
 
-  // ✅ التعديل: تحميل متوازي (أسرع)
   useEffect(() => {
     if (!hasLoaded.current) {
       hasLoaded.current = true;
       const bootstrap = async () => {
         try {
-          // تحميل كل شيء بالتوازي بدلاً من التسلسل
           await Promise.all([
             fetch("/api/init"),
             loadTickets(),
@@ -228,7 +241,6 @@ export default function HomePage() {
 
   const scrollToTickets = () => setActiveSection("tickets");
 
-  // ===== التعديل: إضافة .sort() لترتيب البطاقات تصاعدياً =====
   const filteredTickets = tickets
     .filter((t) => {
       if (showMyTickets) return user && t.user_id === user.id;
@@ -238,18 +250,16 @@ export default function HomePage() {
       return true;
     })
     .filter((t) => (search ? String(t.number).includes(search) : true))
-    .sort((a, b) => a.number - b.number); // ✅ ترتيب تصاعدي (من 1 إلى 5000)
+    .sort((a, b) => a.number - b.number);
 
   const displayTickets = search ? filteredTickets : filteredTickets.slice(0, visibleCount);
   const userTicketCount = user ? tickets.filter((t) => t.user_id === user.id).length : 0;
 
-  // ===== دالة لاختيار بطاقات متعددة =====
   const handleSelectMultipleTickets = (ticketNumbers: number[]) => {
     if (!user) {
       setShowAuth(true);
       return;
     }
-    // فتح الـ Modal مع بيانات متعددة
     setSelectedTicket({ multiple: true, numbers: ticketNumbers });
   };
 
@@ -292,10 +302,8 @@ export default function HomePage() {
         />
       )}
 
-      {/* ===== القائمة العلوية المعدلة ===== */}
       <nav style={{ position: "sticky", top: 0, zIndex: 100, background: "rgba(8, 5, 16, 0.95)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(124, 58, 237, 0.2)" }}>
         <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 16px", height: "70px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          {/* الشعار */}
           <div style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }} onClick={() => setActiveSection("home")}>
             <span style={{ color: "#f59e0b" }}><TrophyIcon /></span>
             <span style={{ fontSize: "20px", fontWeight: "900", background: "linear-gradient(135deg, #f59e0b, #fbbf24)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
@@ -310,7 +318,7 @@ export default function HomePage() {
                 { id: "tickets", label: "البطاقات" },
                 { id: "prizes", label: "الجوائز" },
                 { id: "how", label: "السحوبات" },
-                { id: "winners", label: "🏆 الفائزون" }, // ✅ إضافة رابط الفائزين
+                { id: "winners", label: "🏆 الفائزون" },
               ].map((link) => (
                 <button
                   key={link.id}
@@ -361,7 +369,6 @@ export default function HomePage() {
                 </button>
               )}
 
-              {/* زر الهامبرغر (يظهر على الموبايل) */}
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 style={{
@@ -382,7 +389,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* ===== القائمة المنسدلة للموبايل (تظهر عند الضغط على الهامبرغر) ===== */}
         <div style={{
           display: isMobileMenuOpen ? "block" : "none",
           background: "rgba(8, 5, 16, 0.98)",
@@ -396,7 +402,7 @@ export default function HomePage() {
             { id: "tickets", label: "البطاقات" },
             { id: "prizes", label: "الجوائز" },
             { id: "how", label: "السحوبات" },
-            { id: "winners", label: "🏆 الفائزون" }, // ✅ إضافة رابط الفائزين
+            { id: "winners", label: "🏆 الفائزون" },
           ].map((link) => (
             <button
               key={link.id}
@@ -430,7 +436,6 @@ export default function HomePage() {
           
           <hr style={{ border: "1px solid rgba(124,58,237,0.2)", margin: "12px 0" }} />
           
-          {/* ✅ زر تغيير اللغة داخل القائمة المنسدلة */}
           <div style={{ padding: "8px 16px" }}>
             <LanguageSwitcher />
           </div>
@@ -513,10 +518,13 @@ export default function HomePage() {
             }
           }}
           onSelectMultipleTickets={handleSelectMultipleTickets}
+          // ✅ إضافة الخصائص الجديدة
+          total={total}
+          hasMore={hasMore}
+          onLoadMore={loadMore}
         />
       )}
 
-      {/* عرض سجل الفائزين في الصفحة الرئيسية */}
       {(activeSection === "home" || activeSection === "how") && (
         <HistorySection winners={recentWinners} />
       )}
