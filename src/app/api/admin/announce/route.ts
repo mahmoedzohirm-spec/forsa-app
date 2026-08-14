@@ -1,8 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/db";
 import { sendPushNotification } from "@/lib/firebase-admin";
+import { getTokenFromCookies, verifyToken } from "@/lib/auth"; // ✅ إضافة
 
 export async function POST(req: NextRequest) {
+  // ✅ التحقق من الصلاحيات
+  const token = await getTokenFromCookies();
+  const decoded = verifyToken(token);
+  if (!decoded?.is_admin) {
+    return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
+  }
+
   try {
     const { title, message, type } = await req.json();
 
@@ -44,7 +52,6 @@ export async function POST(req: NextRequest) {
           return sendPushNotification(user.push_token, title, message);
         });
 
-      // ننتظر إرسال جميع الإشعارات ولكن لا نتعطل إذا فشل أحدهم
       await Promise.allSettled(pushPromises);
 
       return NextResponse.json({
