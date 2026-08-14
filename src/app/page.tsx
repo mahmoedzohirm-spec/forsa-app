@@ -30,7 +30,7 @@ const AdminDashboard = dynamic(
 
 export default function HomePage() {
   const { user, login, logout, setUser } = useUser();
-  const { tickets, counts, subscribers, loading: ticketsLoading, loadTickets, loadMore, hasMore, total } = useTickets();
+  const { tickets, counts, subscribers, loading: ticketsLoading, loadTickets } = useTickets();
   const { settings, prizes, loading: settingsLoading, loadSettingsAndPrizes } = useSettings();
   const { toast, showToast } = useToast();
 
@@ -169,7 +169,6 @@ export default function HomePage() {
     }
   }, []);
 
-  // ✅ جلب سجل السحب (متاح للجميع)
   useEffect(() => {
     if (initialized) {
       fetch("/api/admin/draw")
@@ -504,9 +503,6 @@ export default function HomePage() {
             }
           }}
           onSelectMultipleTickets={handleSelectMultipleTickets}
-          total={total}
-          hasMore={hasMore}
-          onLoadMore={loadMore}
         />
       )}
 
