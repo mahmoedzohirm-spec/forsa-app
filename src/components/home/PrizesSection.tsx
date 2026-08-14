@@ -9,12 +9,11 @@ interface PrizesSectionProps {
 export function PrizesSection({ prizes, activeSection }: PrizesSectionProps) {
   const t = useTranslations('HomePage.prizes');
 
-  // ✅ دالة لعرض المركز الصحيح (بدون ترجمة)
   const getRankText = (tier: number) => {
     if (tier === 1) return "المركز الأول";
     if (tier === 2) return "المركز الثاني";
     if (tier === 3) return "المركز الثالث";
-    return `المركز ${tier}`; // المركز الرابع، الخامس، السادس، ...
+    return `المركز ${tier}`;
   };
 
   return (
@@ -117,7 +116,6 @@ export function PrizesSection({ prizes, activeSection }: PrizesSectionProps) {
                   )}
                   <div style={{ fontSize: "32px", marginBottom: "12px" }}>{icon}</div>
                   
-                  {/* ✅ عرض المركز الصحيح (بدون ترجمة) */}
                   <p
                     style={{
                       fontSize: "13px",
