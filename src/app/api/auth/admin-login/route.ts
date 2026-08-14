@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
 
     const client = await pool.connect();
     try {
-      // ✅ نبحث عن المستخدم أولاً
+      // البحث عن المستخدم المسؤول
       const result = await client.query(
         "SELECT id, name, email, phone, is_admin, created_at, password FROM users WHERE (email = $1 OR name = $1) AND is_admin = TRUE",
         [username]
@@ -49,6 +49,7 @@ export async function POST(req: NextRequest) {
       client.release();
     }
   } catch (error) {
+    console.error("Admin login error:", error);
     return NextResponse.json(
       { success: false, error: String(error) },
       { status: 500 }
