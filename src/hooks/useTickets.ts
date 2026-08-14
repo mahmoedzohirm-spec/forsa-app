@@ -1,6 +1,5 @@
 import { useState, useCallback } from "react";
 import { Ticket, TicketCounts } from "@/types";
-import { api } from "@/services/api";
 
 export const useTickets = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -15,14 +14,16 @@ export const useTickets = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [total, setTotal] = useState(0);
-  const limit = 200; // عدد البطاقات في كل دفعة
+  const limit = 200;
 
   // ✅ تحميل الدفعة الأولى أو إعادة التحميل
   const loadTickets = useCallback(async (reset = true) => {
     setLoading(true);
     try {
       const currentPage = reset ? 1 : page;
-      const data = await api.getTickets(currentPage, limit);
+      const res = await fetch(`/api/tickets?page=${currentPage}&limit=${limit}`);
+      const data = await res.json();
+
       if (data.success) {
         if (reset) {
           setTickets(data.tickets);
@@ -41,7 +42,7 @@ export const useTickets = () => {
     } finally {
       setLoading(false);
     }
-  }, [page]);
+  }, [page, limit]);
 
   // ✅ تحميل المزيد (الصفحة التالية)
   const loadMore = useCallback(() => {
