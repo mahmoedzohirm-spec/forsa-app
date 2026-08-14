@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/db";
 import bcrypt from "bcryptjs";
+import { generateToken, setTokenCookie } from "@/lib/auth"; 
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,7 +15,6 @@ export async function POST(req: NextRequest) {
 
     const client = await pool.connect();
     try {
-      // البحث باستخدام البريد الإلكتروني أو اسم المستخدم
       const result = await client.query(
         `SELECT id, name, email, phone, is_admin, is_banned, created_at, password 
          FROM users 
@@ -45,6 +45,10 @@ export async function POST(req: NextRequest) {
       }
 
       delete user.password;
+
+      const token = generateToken(user);
+      await setTokenCookie(token);
+
       return NextResponse.json({ success: true, user });
     } finally {
       client.release();
