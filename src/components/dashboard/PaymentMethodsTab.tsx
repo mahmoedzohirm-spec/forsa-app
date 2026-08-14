@@ -14,13 +14,15 @@ export function PaymentMethodsTab({ showToast }: PaymentMethodsTabProps) {
     iban: "",
     bank_name: "",
     account_holder: "",
-    phone_number: "", // ✅ الحقل الجديد
+    phone_number: "",
   });
 
   const loadMethods = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/payment-methods");
+      const res = await fetch("/api/admin/payment-methods", {
+        credentials: "include", // ✅ إضافة
+      });
       const data = await res.json();
       if (data.success) setMethods(data.methods);
     } catch (error) {
@@ -51,6 +53,7 @@ export function PaymentMethodsTab({ showToast }: PaymentMethodsTabProps) {
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
+        credentials: "include", // ✅ إضافة
         body: JSON.stringify(body),
       });
       const data = await res.json();
@@ -73,6 +76,7 @@ export function PaymentMethodsTab({ showToast }: PaymentMethodsTabProps) {
       const res = await fetch("/api/admin/payment-methods", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
+        credentials: "include", // ✅ إضافة
         body: JSON.stringify({ id }),
       });
       const data = await res.json();
@@ -111,7 +115,6 @@ export function PaymentMethodsTab({ showToast }: PaymentMethodsTabProps) {
         💳 إدارة طرق الدفع
       </h1>
 
-      {/* نموذج الإضافة/التعديل */}
       <div style={{ ...cardStyle, marginBottom: "24px" }}>
         <h3 style={{ color: "#c4b5fd", fontWeight: "700", marginBottom: "16px" }}>
           {editingId ? "تعديل طريقة الدفع" : "إضافة طريقة دفع جديدة"}
@@ -167,7 +170,6 @@ export function PaymentMethodsTab({ showToast }: PaymentMethodsTabProps) {
                 onChange={(e) => setFormData({ ...formData, account_holder: e.target.value })}
               />
             </div>
-            {/* ✅ الحقل الجديد: رقم الجوال */}
             <div>
               <label style={{ color: "#9ca3af", fontSize: "13px", display: "block", marginBottom: "6px" }}>
                 رقم الجوال (اختياري)
@@ -214,7 +216,6 @@ export function PaymentMethodsTab({ showToast }: PaymentMethodsTabProps) {
         </form>
       </div>
 
-      {/* قائمة طرق الدفع */}
       <div style={cardStyle}>
         <h3 style={{ color: "#c4b5fd", fontWeight: "700", marginBottom: "16px" }}>
           طرق الدفع المتاحة ({methods.length})
@@ -245,7 +246,6 @@ export function PaymentMethodsTab({ showToast }: PaymentMethodsTabProps) {
                   {m.iban && <p style={{ color: "#9ca3af", fontSize: "13px" }}>آيبان: {m.iban}</p>}
                   {m.bank_name && <p style={{ color: "#9ca3af", fontSize: "13px" }}>البنك: {m.bank_name}</p>}
                   {m.account_holder && <p style={{ color: "#9ca3af", fontSize: "13px" }}>صاحب الحساب: {m.account_holder}</p>}
-                  {/* ✅ عرض رقم الجوال */}
                   {m.phone_number && <p style={{ color: "#9ca3af", fontSize: "13px" }}>📱 الجوال: {m.phone_number}</p>}
                 </div>
                 <div style={{ display: "flex", gap: "8px" }}>
