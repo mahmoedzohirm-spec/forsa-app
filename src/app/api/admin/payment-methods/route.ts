@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/db";
+import { getTokenFromCookies, verifyToken } from "@/lib/auth"; // ✅ إضافة
 
 export const dynamic = 'force-dynamic';
 
 // جلب جميع طرق الدفع
 export async function GET() {
+  // ✅ التحقق من الصلاحيات
+  const token = await getTokenFromCookies();
+  const decoded = verifyToken(token);
+  if (!decoded?.is_admin) {
+    return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
+  }
+
   try {
     const client = await pool.connect();
     try {
@@ -26,6 +34,13 @@ export async function GET() {
 
 // ✅ إضافة طريقة دفع جديدة (مع phone_number)
 export async function POST(req: NextRequest) {
+  // ✅ التحقق من الصلاحيات
+  const token = await getTokenFromCookies();
+  const decoded = verifyToken(token);
+  if (!decoded?.is_admin) {
+    return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
+  }
+
   try {
     const { name, iban, bank_name, account_holder, phone_number } = await req.json();
     if (!name) {
@@ -58,6 +73,13 @@ export async function POST(req: NextRequest) {
 
 // ✅ تعديل طريقة دفع (مع phone_number)
 export async function PUT(req: NextRequest) {
+  // ✅ التحقق من الصلاحيات
+  const token = await getTokenFromCookies();
+  const decoded = verifyToken(token);
+  if (!decoded?.is_admin) {
+    return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
+  }
+
   try {
     const { id, name, iban, bank_name, account_holder, phone_number } = await req.json();
     if (!id || !name) {
@@ -90,6 +112,13 @@ export async function PUT(req: NextRequest) {
 
 // حذف طريقة دفع
 export async function DELETE(req: NextRequest) {
+  // ✅ التحقق من الصلاحيات
+  const token = await getTokenFromCookies();
+  const decoded = verifyToken(token);
+  if (!decoded?.is_admin) {
+    return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
+  }
+
   try {
     const { id } = await req.json();
     if (!id) {
