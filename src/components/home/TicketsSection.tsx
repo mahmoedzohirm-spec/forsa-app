@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { Ticket, TicketCounts, User } from '@/types';
-import { SkeletonTicketGrid } from '@/components/ui/Skeleton';
+import { Ticket, TicketCounts, User } from "@/types";
+import { SkeletonTicketGrid } from "@/components/ui/Skeleton";
 
 interface TicketsSectionProps {
   tickets: Ticket[];
@@ -14,16 +14,12 @@ interface TicketsSectionProps {
   search: string;
   setSearch: (search: string) => void;
   visibleCount: number;
-  setVisibleCount: (count: number) => void; // ✅ أضفنا هذا السطر
+  setVisibleCount: (count: number) => void;
   showMyTickets: boolean;
   setShowMyTickets: (show: boolean) => void;
   filteredTickets: Ticket[];
   onSelectTicket: (ticket: Ticket) => void;
   onSelectMultipleTickets: (ticketNumbers: number[]) => void;
-  // ✅ الخصائص الجديدة لـ Pagination
-  total?: number;
-  hasMore?: boolean;
-  onLoadMore?: () => void;
 }
 
 export function TicketsSection({
@@ -37,15 +33,12 @@ export function TicketsSection({
   search,
   setSearch,
   visibleCount,
-  setVisibleCount, // ✅ استقبلناها هنا
+  setVisibleCount,
   showMyTickets,
   setShowMyTickets,
   filteredTickets,
   onSelectTicket,
   onSelectMultipleTickets,
-  total = 0,
-  hasMore = false,
-  onLoadMore,
 }: TicketsSectionProps) {
   const t = useTranslations('HomePage.tickets');
   const locale = useLocale();
@@ -441,38 +434,20 @@ export function TicketsSection({
               })}
             </div>
 
-            {/* ✅ زر تحميل المزيد */}
-            {!loading && (
+            {!search && filteredTickets.length > visibleCount && (
               <div style={{ textAlign: "center", marginTop: "32px" }}>
-                {hasMore ? (
-                  <button
-                    onClick={onLoadMore}
-                    style={{
-                      padding: "12px 32px",
-                      borderRadius: "50px",
-                      fontSize: "16px",
-                      fontWeight: "700",
-                      fontFamily: "Cairo, Inter, sans-serif",
-                      background: "rgba(124,58,237,0.2)",
-                      border: "2px solid rgba(124,58,237,0.4)",
-                      color: "#c4b5fd",
-                      cursor: "pointer",
-                      transition: "all 0.3s",
-                    }}
-                    onMouseEnter={(e) => {
-                      (e.target as HTMLButtonElement).style.background = "rgba(124,58,237,0.4)";
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.target as HTMLButtonElement).style.background = "rgba(124,58,237,0.2)";
-                    }}
-                  >
-                    📥 تحميل المزيد ({filteredTickets.length} / {total})
-                  </button>
-                ) : (
-                  <p style={{ color: "#6b7280", fontSize: "14px" }}>
-                    ✅ تم تحميل جميع البطاقات ({total})
-                  </p>
-                )}
+                <button
+                  onClick={() => setVisibleCount(visibleCount + 300)}
+                  className="btn-purple"
+                  style={{
+                    padding: "12px 32px",
+                    borderRadius: "50px",
+                    fontSize: "15px",
+                    fontFamily: "Cairo, Inter, sans-serif",
+                  }}
+                >
+                  {t('load_more', { remaining: formatNumber(remainingCount) })}
+                </button>
               </div>
             )}
 
