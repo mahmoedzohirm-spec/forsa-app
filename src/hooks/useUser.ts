@@ -7,24 +7,6 @@ export const useUser = () => {
 
   const fetchUser = useCallback(async () => {
     try {
-      // 1️⃣ التحقق من Session المسؤول (من Cookie)
-      const adminSession = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('adminSession='));
-      if (adminSession) {
-        try {
-          const userData = JSON.parse(decodeURIComponent(adminSession.split('=')[1]));
-          if (userData.is_admin) {
-            setUser(userData);
-            setLoading(false);
-            return;
-          }
-        } catch {
-          // تجاهل
-        }
-      }
-
-      // 2️⃣ التحقق من التوكن للمستخدم العادي
       const res = await fetch("/api/auth/me");
       if (res.ok) {
         const data = await res.json();
@@ -34,8 +16,6 @@ export const useUser = () => {
           return;
         }
       }
-
-      // 3️⃣ الاحتياطي: localStorage
       const saved = localStorage.getItem("forsaUser");
       if (saved) {
         try {
@@ -63,7 +43,6 @@ export const useUser = () => {
   const logout = useCallback(() => {
     setUser(null);
     localStorage.removeItem("forsaUser");
-    document.cookie = "adminSession=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     document.cookie = "user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
   }, []);
