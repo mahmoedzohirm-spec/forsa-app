@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { User } from '@/types';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this';
-const TOKEN_EXPIRY = '7d';
+const TOKEN_EXPIRY = '30d';
 
 export function generateToken(user: User): string {
   return jwt.sign(
