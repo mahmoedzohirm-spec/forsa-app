@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/db";
 import bcrypt from "bcryptjs";
-import { generateToken, setTokenCookie } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,7 +14,6 @@ export async function POST(req: NextRequest) {
 
     const client = await pool.connect();
     try {
-      // البحث عن المستخدم المسؤول
       const result = await client.query(
         "SELECT id, name, email, phone, is_admin, created_at, password FROM users WHERE (email = $1 OR name = $1) AND is_admin = TRUE",
         [username]
@@ -28,8 +26,6 @@ export async function POST(req: NextRequest) {
       }
 
       const user = result.rows[0];
-      
-      // ✅ التحقق من كلمة المرور باستخدام bcrypt
       const isValid = await bcrypt.compare(secretKey, user.password);
       if (!isValid) {
         return NextResponse.json(
@@ -40,11 +36,17 @@ export async function POST(req: NextRequest) {
 
       delete user.password;
 
-      // ✅ توليد التوكن وحفظه في الكوكي
-      const token = generateToken(user);
-      await setTokenCookie(token);
+      // ✅ حفظ Session المسؤول في Cookie (بدون JWT)
+      const response = NextResponse.json({ success: true, user });
+      response.cookies.set('adminSession', JSON.stringify(user), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 30, // 30 يوم
+        path: '/',
+      });
 
-      return NextResponse.json({ success: true, user });
+      return response;
     } finally {
       client.release();
     }
