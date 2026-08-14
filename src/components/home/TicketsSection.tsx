@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { Ticket, TicketCounts, User } from "@/types";
-import { SkeletonTicketGrid } from "@/components/ui/Skeleton";
+import { Ticket, TicketCounts, User } from '@/types';
+import { SkeletonTicketGrid } from '@/components/ui/Skeleton';
 
 interface TicketsSectionProps {
   tickets: Ticket[];
@@ -14,13 +14,13 @@ interface TicketsSectionProps {
   search: string;
   setSearch: (search: string) => void;
   visibleCount: number;
-  setVisibleCount: (count: number) => void;
+  setVisibleCount: (count: number) => void; // ✅ أضفنا هذا السطر
   showMyTickets: boolean;
   setShowMyTickets: (show: boolean) => void;
   filteredTickets: Ticket[];
   onSelectTicket: (ticket: Ticket) => void;
   onSelectMultipleTickets: (ticketNumbers: number[]) => void;
-  // ✅ خصائص Pagination الجديدة
+  // ✅ الخصائص الجديدة لـ Pagination
   total?: number;
   hasMore?: boolean;
   onLoadMore?: () => void;
@@ -37,7 +37,7 @@ export function TicketsSection({
   search,
   setSearch,
   visibleCount,
-  setVisibleCount,
+  setVisibleCount, // ✅ استقبلناها هنا
   showMyTickets,
   setShowMyTickets,
   filteredTickets,
@@ -54,18 +54,15 @@ export function TicketsSection({
     return new Intl.NumberFormat(locale).format(num);
   };
 
-  // حساب القيم المنسقة
   const totalTickets = parseInt(counts.total || "0");
   const availableTickets = parseInt(counts.available || "0");
   const pendingTickets = parseInt(counts.pending || "0");
   const soldTickets = parseInt(counts.sold || "0");
   const remainingCount = filteredTickets.length - visibleCount;
 
-  // ===== حالة الحجز المتعدد =====
   const [multiSelectMode, setMultiSelectMode] = useState(false);
   const [selectedTickets, setSelectedTickets] = useState<number[]>([]);
 
-  // ===== دالة الاختيار اليدوي (إضافة/إزالة بطاقة) =====
   const handleManualSelect = (ticketNumber: number) => {
     setSelectedTickets((prev) => {
       if (prev.includes(ticketNumber)) {
@@ -80,7 +77,6 @@ export function TicketsSection({
     });
   };
 
-  // ===== دالة تحديد ألوان البطاقة =====
   const getTicketStyle = (ticket: Ticket) => {
     switch (ticket.status) {
       case "available":
@@ -138,7 +134,7 @@ export function TicketsSection({
           )}
         </div>
 
-        {/* الفلاتر والبحث (نفس الكود القديم) */}
+        {/* الفلاتر والبحث */}
         <div
           style={{
             background: "rgba(30, 20, 53, 0.6)",
@@ -260,7 +256,7 @@ export function TicketsSection({
           </div>
         </div>
 
-        {/* ===== Multi-select toolbar (نفس الكود القديم) ===== */}
+        {/* Multi-select toolbar */}
         <div
           style={{
             background: "rgba(30, 20, 53, 0.6)",
@@ -357,7 +353,7 @@ export function TicketsSection({
           )}
         </div>
 
-        {/* شبكة البطاقات (نفس الكود القديم) */}
+        {/* شبكة البطاقات */}
         {loading ? (
           <SkeletonTicketGrid />
         ) : (
@@ -445,7 +441,7 @@ export function TicketsSection({
               })}
             </div>
 
-            {/* ✅ زر تحميل المزيد الجديد (باستخدام Props) */}
+            {/* ✅ زر تحميل المزيد */}
             {!loading && (
               <div style={{ textAlign: "center", marginTop: "32px" }}>
                 {hasMore ? (
