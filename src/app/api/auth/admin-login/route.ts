@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/db";
+import { generateToken, setTokenCookie } from "@/lib/auth"; 
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,6 +13,7 @@ export async function POST(req: NextRequest) {
     }
     const client = await pool.connect();
     try {
+      // البحث عن المستخدم المسؤول
       const result = await client.query(
         "SELECT id, name, email, phone, is_admin, created_at FROM users WHERE (email = $1 OR name = $1) AND password = $2 AND is_admin = TRUE",
         [username, secretKey]
@@ -22,7 +24,12 @@ export async function POST(req: NextRequest) {
           { status: 401 }
         );
       }
-      return NextResponse.json({ success: true, user: result.rows[0] });
+      const user = result.rows[0];
+
+      const token = generateToken(user);
+      await setTokenCookie(token);
+
+      return NextResponse.json({ success: true, user });
     } finally {
       client.release();
     }
