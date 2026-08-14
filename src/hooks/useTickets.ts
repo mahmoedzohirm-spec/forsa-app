@@ -12,22 +12,53 @@ export const useTickets = () => {
   });
   const [subscribers, setSubscribers] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [total, setTotal] = useState(0);
+  const limit = 200; // عدد البطاقات في كل دفعة
 
-  const loadTickets = useCallback(async () => {
+  // ✅ تحميل الدفعة الأولى أو إعادة التحميل
+  const loadTickets = useCallback(async (reset = true) => {
     setLoading(true);
     try {
-      const data = await api.getTickets(5000); // ✅ تم التغيير إلى 5000
+      const currentPage = reset ? 1 : page;
+      const data = await api.getTickets(currentPage, limit);
       if (data.success) {
-        setTickets(data.tickets);
+        if (reset) {
+          setTickets(data.tickets);
+          setPage(1);
+        } else {
+          setTickets((prev) => [...prev, ...data.tickets]);
+          setPage(currentPage + 1);
+        }
         setCounts(data.counts);
-        setSubscribers(parseInt(data.subscribers || "0"));
+        setHasMore(data.pagination.hasMore);
+        setTotal(data.pagination.total);
+        if (data.subscribers !== undefined) setSubscribers(data.subscribers);
       }
     } catch (error) {
       console.error("Error loading tickets:", error);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page]);
 
-  return { tickets, counts, subscribers, loading, loadTickets };
+  // ✅ تحميل المزيد (الصفحة التالية)
+  const loadMore = useCallback(() => {
+    if (!loading && hasMore) {
+      loadTickets(false);
+    }
+  }, [loading, hasMore, loadTickets]);
+
+  return {
+    tickets,
+    counts,
+    subscribers,
+    loading,
+    loadTickets,
+    loadMore,
+    hasMore,
+    total,
+    limit,
+  };
 };
