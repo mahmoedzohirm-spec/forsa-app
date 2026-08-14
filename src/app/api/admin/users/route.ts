@@ -1,11 +1,18 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/db";
+import { getTokenFromCookies, verifyToken } from "@/lib/auth"; // ✅ إضافة
 
 export async function GET() {
+  // ✅ التحقق من الصلاحيات
+  const token = await getTokenFromCookies();
+  const decoded = verifyToken(token);
+  if (!decoded?.is_admin) {
+    return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
+  }
+
   try {
     const client = await pool.connect();
     try {
-      // إضافة LIMIT للحماية من الأحمال الكبيرة
       const result = await client.query(
         `SELECT id, name, email, phone, is_admin, is_banned, created_at
          FROM users
