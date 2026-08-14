@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/db";
+import { getTokenFromCookies, verifyToken } from "@/lib/auth"; // ✅ إضافة
 
-// منع التخزين المؤقت في Turbopack
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
+  // ✅ التحقق من الصلاحيات
+  const token = await getTokenFromCookies();
+  const decoded = verifyToken(token);
+  if (!decoded?.is_admin) {
+    return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
+  }
+
   try {
     const client = await pool.connect();
     try {
@@ -27,6 +34,13 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  // ✅ التحقق من الصلاحيات
+  const token = await getTokenFromCookies();
+  const decoded = verifyToken(token);
+  if (!decoded?.is_admin) {
+    return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
+  }
+
   try {
     const { settings } = await req.json();
     const client = await pool.connect();
