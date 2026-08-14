@@ -4,16 +4,8 @@ import { getTokenFromCookies, verifyToken } from "@/lib/auth";
 
 export const dynamic = 'force-dynamic';
 
+// ✅ GET عام (بدون تحقق)
 export async function GET() {
-  const token = await getTokenFromCookies();
-  if (!token) {
-    return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
-  }
-  const decoded = verifyToken(token);
-  if (!decoded?.is_admin) {
-    return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
-  }
-
   try {
     const client = await pool.connect();
     try {
@@ -35,6 +27,7 @@ export async function GET() {
   }
 }
 
+// ✅ POST محمي
 export async function POST(req: NextRequest) {
   const token = await getTokenFromCookies();
   if (!token) {
@@ -42,9 +35,8 @@ export async function POST(req: NextRequest) {
   }
   const decoded = verifyToken(token);
   if (!decoded?.is_admin) {
-    return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
+    return NextResponse.json({ error: "صلاحيات غير كافية" }, { status: 403 });
   }
-
   try {
     const { settings } = await req.json();
     const client = await pool.connect();
