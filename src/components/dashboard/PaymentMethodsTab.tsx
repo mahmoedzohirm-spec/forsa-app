@@ -46,9 +46,7 @@ export function PaymentMethodsTab({ showToast }: PaymentMethodsTabProps) {
     try {
       const url = `/api/admin/payment-methods`;
       const method = editingId ? "PUT" : "POST";
-      const body = editingId
-        ? { id: editingId, ...formData }
-        : formData;
+      const body = editingId ? { id: editingId, ...formData } : formData;
 
       const res = await fetch(url, {
         method,
