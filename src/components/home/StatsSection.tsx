@@ -24,8 +24,6 @@ export function StatsSection({ counts, subscribers: _subscribers, user }: StatsS
           if (res.ok) {
             const data = await res.json();
             setUserCount(data.count || 0);
-          } else {
-            console.error("Failed to fetch user count");
           }
         } catch (error) {
           console.error("Error fetching user count:", error);
