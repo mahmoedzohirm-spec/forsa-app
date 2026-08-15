@@ -4,7 +4,7 @@ import { getTokenFromCookies, verifyToken } from "@/lib/auth";
 
 export const dynamic = 'force-dynamic';
 
-// ✅ GET عام (بدون تحقق)
+// ✅ GET عام (مع Caching لمدة 60 ثانية)
 export async function GET() {
   try {
     const client = await pool.connect();
@@ -12,7 +12,16 @@ export async function GET() {
       const result = await client.query(
         "SELECT id, tier, title, description, image, is_active FROM prizes ORDER BY tier ASC LIMIT 100"
       );
-      return NextResponse.json({ success: true, prizes: result.rows });
+      
+      // ✅ إضافة Cache Headers (تخزين لمدة 60 ثانية)
+      return NextResponse.json(
+        { success: true, prizes: result.rows },
+        {
+          headers: {
+            'Cache-Control': 's-maxage=60, stale-while-revalidate',
+          },
+        }
+      );
     } finally {
       client.release();
     }
@@ -25,7 +34,7 @@ export async function GET() {
   }
 }
 
-// ✅ POST محمي
+// ✅ POST محمي (بدون Caching)
 export async function POST(req: NextRequest) {
   const token = await getTokenFromCookies();
   if (!token) {
@@ -56,7 +65,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// ✅ PUT محمي
+// ✅ PUT محمي (بدون Caching)
 export async function PUT(req: NextRequest) {
   const token = await getTokenFromCookies();
   if (!token) {
@@ -87,7 +96,7 @@ export async function PUT(req: NextRequest) {
   }
 }
 
-// ✅ DELETE محمي
+// ✅ DELETE محمي (بدون Caching)
 export async function DELETE(req: NextRequest) {
   const token = await getTokenFromCookies();
   if (!token) {
