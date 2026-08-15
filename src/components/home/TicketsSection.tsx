@@ -20,7 +20,6 @@ interface TicketsSectionProps {
   filteredTickets: Ticket[];
   onSelectTicket: (ticket: Ticket) => void;
   onSelectMultipleTickets: (ticketNumbers: number[]) => void;
-  // ✅ الخصائص الجديدة
   total?: number;
   hasMore?: boolean;
   onLoadMore?: () => void;
@@ -58,7 +57,6 @@ export function TicketsSection({
   const availableTickets = parseInt(counts.available || "0");
   const pendingTickets = parseInt(counts.pending || "0");
   const soldTickets = parseInt(counts.sold || "0");
-  const remainingCount = filteredTickets.length - visibleCount;
 
   const [multiSelectMode, setMultiSelectMode] = useState(false);
   const [selectedTickets, setSelectedTickets] = useState<number[]>([]);
@@ -134,7 +132,7 @@ export function TicketsSection({
           )}
         </div>
 
-        {/* الفلاتر والبحث */}
+        {/* الفلاتر والبحث (نفس الكود القديم) */}
         <div
           style={{
             background: "rgba(30, 20, 53, 0.6)",
@@ -256,7 +254,7 @@ export function TicketsSection({
           </div>
         </div>
 
-        {/* Multi-select toolbar */}
+        {/* Multi-select toolbar (نفس الكود) */}
         <div
           style={{
             background: "rgba(30, 20, 53, 0.6)",
@@ -441,7 +439,7 @@ export function TicketsSection({
               })}
             </div>
 
-            {/* ✅ زر تحميل المزيد الجديد (باستخدام Pagination الحقيقي) */}
+            {/* ✅ زر تحميل المزيد الجديد (Pagination حقيقي) */}
             {!loading && (
               <div style={{ textAlign: "center", marginTop: "32px" }}>
                 {hasMore ? (
