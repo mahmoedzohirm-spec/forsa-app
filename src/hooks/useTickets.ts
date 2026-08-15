@@ -14,7 +14,7 @@ export const useTickets = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [total, setTotal] = useState(0);
-  const limit = 200;
+  const limit = 200; // ← عدد البطاقات لكل دفعة
 
   const loadTickets = useCallback(async (reset = true) => {
     setLoading(true);
@@ -27,7 +27,7 @@ export const useTickets = () => {
           setTickets(data.tickets);
           setPage(1);
         } else {
-          setTickets((prev) => [...prev, ...data.tickets]);
+          setTickets(prev => [...prev, ...data.tickets]);
           setPage(currentPage + 1);
         }
         setCounts(data.counts);
