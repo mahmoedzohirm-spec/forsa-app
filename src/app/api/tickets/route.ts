@@ -37,23 +37,31 @@ export async function GET(req: NextRequest) {
       `);
       const stats = statsResult.rows[0];
 
-      return NextResponse.json({
-        success: true,
-        tickets: result.rows,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages,
-          hasMore: page < totalPages,
+      // ✅ إضافة Cache Headers (تخزين لمدة 60 ثانية)
+      return NextResponse.json(
+        {
+          success: true,
+          tickets: result.rows,
+          pagination: {
+            page,
+            limit,
+            total,
+            totalPages,
+            hasMore: page < totalPages,
+          },
+          counts: {
+            total: stats.total || '0',
+            available: stats.available || '0',
+            pending: stats.pending || '0',
+            sold: stats.sold || '0',
+          },
         },
-        counts: {
-          total: stats.total || '0',
-          available: stats.available || '0',
-          pending: stats.pending || '0',
-          sold: stats.sold || '0',
-        },
-      });
+        {
+          headers: {
+            'Cache-Control': 's-maxage=60, stale-while-revalidate',
+          },
+        }
+      );
     } finally {
       client.release();
     }
