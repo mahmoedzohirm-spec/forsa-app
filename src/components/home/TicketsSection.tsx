@@ -132,7 +132,7 @@ export function TicketsSection({
           )}
         </div>
 
-        {/* الفلاتر والبحث (نفس الكود القديم) */}
+        {/* الفلاتر والبحث */}
         <div
           style={{
             background: "rgba(30, 20, 53, 0.6)",
@@ -254,7 +254,7 @@ export function TicketsSection({
           </div>
         </div>
 
-        {/* Multi-select toolbar (نفس الكود) */}
+        {/* Multi-select toolbar */}
         <div
           style={{
             background: "rgba(30, 20, 53, 0.6)",
@@ -439,7 +439,7 @@ export function TicketsSection({
               })}
             </div>
 
-            {/* ✅ زر تحميل المزيد الجديد (Pagination حقيقي) */}
+            {/* ✅ زر تحميل المزيد الجديد (Pagination حقيقي) - تم حذف الزر القديم */}
             {!loading && (
               <div style={{ textAlign: "center", marginTop: "32px" }}>
                 {hasMore ? (
