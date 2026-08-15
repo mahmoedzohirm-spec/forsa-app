@@ -30,7 +30,8 @@ const AdminDashboard = dynamic(
 
 export default function HomePage() {
   const { user, login, logout, setUser } = useUser();
-  // ✅ استخدم الخصائص الجديدة من useTickets
+  
+  // ✅ استخدام useTickets مع Pagination
   const {
     tickets,
     counts,
@@ -41,6 +42,7 @@ export default function HomePage() {
     hasMore,
     total,
   } = useTickets();
+  
   const { settings, prizes, loading: settingsLoading, loadSettingsAndPrizes } = useSettings();
   const { toast, showToast } = useToast();
 
@@ -513,7 +515,6 @@ export default function HomePage() {
             }
           }}
           onSelectMultipleTickets={handleSelectMultipleTickets}
-          // ✅ تمرير الخصائص الجديدة
           total={total}
           hasMore={hasMore}
           onLoadMore={loadMore}
