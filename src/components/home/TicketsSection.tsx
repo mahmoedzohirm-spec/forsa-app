@@ -20,7 +20,6 @@ interface TicketsSectionProps {
   filteredTickets: Ticket[];
   onSelectTicket: (ticket: Ticket) => void;
   onSelectMultipleTickets: (ticketNumbers: number[]) => void;
-  // ✅ خصائص Pagination الجديدة
   total?: number;
   hasMore?: boolean;
   onLoadMore?: () => void;
@@ -134,7 +133,7 @@ export function TicketsSection({
           )}
         </div>
 
-        {/* الفلاتر والبحث (نفس الكود القديم) */}
+        {/* الفلاتر والبحث */}
         <div
           style={{
             background: "rgba(30, 20, 53, 0.6)",
@@ -256,7 +255,7 @@ export function TicketsSection({
           </div>
         </div>
 
-        {/* Multi-select toolbar (نفس الكود القديم) */}
+        {/* Multi-select toolbar */}
         <div
           style={{
             background: "rgba(30, 20, 53, 0.6)",
@@ -353,7 +352,7 @@ export function TicketsSection({
           )}
         </div>
 
-        {/* شبكة البطاقات (نفس الكود القديم) */}
+        {/* شبكة البطاقات */}
         {loading ? (
           <SkeletonTicketGrid />
         ) : (
@@ -441,7 +440,7 @@ export function TicketsSection({
               })}
             </div>
 
-            {/* ✅ زر تحميل المزيد الجديد (باستخدام Props) */}
+            {/* ✅ زر تحميل المزيد الجديد (باستخدام Pagination) */}
             {!loading && (
               <div style={{ textAlign: "center", marginTop: "32px" }}>
                 {hasMore ? (
