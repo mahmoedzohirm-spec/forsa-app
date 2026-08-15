@@ -30,18 +30,7 @@ const AdminDashboard = dynamic(
 
 export default function HomePage() {
   const { user, login, logout, setUser } = useUser();
-  
-  const {
-    tickets,
-    counts,
-    subscribers,
-    loading: ticketsLoading,
-    loadTickets,
-    loadMore,
-    hasMore,
-    total,
-  } = useTickets();
-  
+  const { tickets, counts, subscribers, loading: ticketsLoading, loadTickets } = useTickets();
   const { settings, prizes, loading: settingsLoading, loadSettingsAndPrizes } = useSettings();
   const { toast, showToast } = useToast();
 
@@ -248,9 +237,7 @@ export default function HomePage() {
     .filter((t) => (search ? String(t.number).includes(search) : true))
     .sort((a, b) => a.number - b.number);
 
-  // ✅ التعديل الأساسي: استخدم tickets مباشرة، وليس slice
-  const displayTickets = search ? filteredTickets : tickets;
-
+  const displayTickets = search ? filteredTickets : filteredTickets.slice(0, visibleCount);
   const userTicketCount = user ? tickets.filter((t) => t.user_id === user.id).length : 0;
 
   const handleSelectMultipleTickets = (ticketNumbers: number[]) => {
@@ -516,9 +503,6 @@ export default function HomePage() {
             }
           }}
           onSelectMultipleTickets={handleSelectMultipleTickets}
-          total={total}
-          hasMore={hasMore}
-          onLoadMore={loadMore}
         />
       )}
 
