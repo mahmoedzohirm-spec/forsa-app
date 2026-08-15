@@ -31,7 +31,6 @@ const AdminDashboard = dynamic(
 export default function HomePage() {
   const { user, login, logout, setUser } = useUser();
   
-  // ✅ استخدام useTickets مع Pagination
   const {
     tickets,
     counts,
@@ -249,7 +248,9 @@ export default function HomePage() {
     .filter((t) => (search ? String(t.number).includes(search) : true))
     .sort((a, b) => a.number - b.number);
 
-  const displayTickets = search ? filteredTickets : filteredTickets.slice(0, visibleCount);
+  // ✅ التعديل الأساسي: استخدم tickets مباشرة، وليس slice
+  const displayTickets = search ? filteredTickets : tickets;
+
   const userTicketCount = user ? tickets.filter((t) => t.user_id === user.id).length : 0;
 
   const handleSelectMultipleTickets = (ticketNumbers: number[]) => {
