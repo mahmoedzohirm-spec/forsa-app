@@ -46,10 +46,24 @@ export async function POST(req: NextRequest) {
 
       delete user.password;
 
-      const token = generateToken(user);
-      await setTokenCookie(token);
+      const response = NextResponse.json({ success: true, user });
 
-      return NextResponse.json({ success: true, user });
+      // ✅ إذا كان المستخدم مسؤولاً، نضع adminSession (بدون توكن)
+      if (user.is_admin) {
+        response.cookies.set('adminSession', JSON.stringify(user), {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 60 * 60 * 24 * 30,
+          path: '/',
+        });
+      } else {
+        // ✅ إذا كان مستخدم عادي، نضع التوكن العادي
+        const token = generateToken(user);
+        await setTokenCookie(token);
+      }
+
+      return response;
     } finally {
       client.release();
     }
