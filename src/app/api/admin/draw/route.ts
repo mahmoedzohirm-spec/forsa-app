@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/db";
-import { getTokenFromCookies, verifyToken } from "@/lib/auth";
 
 // ✅ GET عام (بدون تحقق)
 export async function GET() {
@@ -27,16 +26,8 @@ export async function GET() {
   }
 }
 
-// ✅ POST محمي
+// ✅ POST عام (بدون تحقق)
 export async function POST(req: NextRequest) {
-  const token = await getTokenFromCookies();
-  if (!token) {
-    return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
-  }
-  const decoded = verifyToken(token);
-  if (!decoded?.is_admin) {
-    return NextResponse.json({ error: "صلاحيات غير كافية" }, { status: 403 });
-  }
   try {
     const { prize, ticketNumber, winnerName, winnerPhone } = await req.json();
     const client = await pool.connect();
