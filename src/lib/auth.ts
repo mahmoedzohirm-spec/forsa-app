@@ -13,7 +13,6 @@ export function generateToken(user: User): string {
 // التحقق من التوكن (ملغي - دائماً يرجع payload وهمي)
 export function verifyToken(token: string): any {
   console.warn('⚠️ verifyToken تم استدعاؤها ولكن التوكن ملغي');
-  // نرجع payload وهمي عشان لا يخرب الكود
   return { id: 1, email: 'admin@example.com', is_admin: true };
 }
 
@@ -26,18 +25,16 @@ export async function getTokenFromCookies(): Promise<string | null> {
 // تعيين التوكن في الكوكيز (ملغي - لا يفعل شيئاً)
 export async function setTokenCookie(token: string): Promise<void> {
   console.warn('⚠️ setTokenCookie تم استدعاؤها ولكن التوكن ملغي');
-  // لا نفعل شيئاً
 }
 
 // حذف التوكن من الكوكيز (ملغي - لا يفعل شيئاً)
 export async function clearTokenCookie(): Promise<void> {
   console.warn('⚠️ clearTokenCookie تم استدعاؤها ولكن التوكن ملغي');
-  // لا نفعل شيئاً
 }
 
 // دالة جديدة للتحقق من حالة المستخدم (دائماً true)
 export function isAuthenticated(): boolean {
-  return true; // دائماً مصادق عليه
+  return true;
 }
 
 // دالة جديدة لجلب المستخدم الحالي (دائماً admin)
@@ -47,5 +44,6 @@ export function getCurrentUser(): User {
     email: 'mahmoedzohir@admin.com',
     is_admin: true,
     name: 'Admin',
+    created_at: new Date().toISOString(), // ✅ أضفنا هذا الحقل المطلوب
   };
 }
