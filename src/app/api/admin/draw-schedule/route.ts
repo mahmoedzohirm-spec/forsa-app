@@ -1,17 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { pool } from "@/db"; // ✅ مسار صحيح
-import { getTokenFromCookies, verifyToken } from "@/lib/auth"; // ✅ مسار صحيح
+import { pool } from "@/db";
 
 export async function GET() {
-  const token = await getTokenFromCookies();
-  if (!token) {
-    return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
-  }
-  const decoded = verifyToken(token);
-  if (!decoded?.is_admin) {
-    return NextResponse.json({ error: "صلاحيات غير كافية" }, { status: 403 });
-  }
-
   try {
     const client = await pool.connect();
     try {
@@ -35,15 +25,6 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const token = await getTokenFromCookies();
-  if (!token) {
-    return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
-  }
-  const decoded = verifyToken(token);
-  if (!decoded?.is_admin) {
-    return NextResponse.json({ error: "صلاحيات غير كافية" }, { status: 403 });
-  }
-
   try {
     const { schedule } = await req.json();
 
