@@ -1,19 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/db";
-import { getTokenFromCookies, verifyToken } from "@/lib/auth";
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const token = await getTokenFromCookies();
-  if (!token) {
-    return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
-  }
-  const decoded = verifyToken(token);
-  if (!decoded?.is_admin) {
-    return NextResponse.json({ error: "صلاحيات غير كافية" }, { status: 403 });
-  }
-
   try {
     const client = await pool.connect();
     try {
@@ -34,15 +24,6 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const token = await getTokenFromCookies();
-  if (!token) {
-    return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
-  }
-  const decoded = verifyToken(token);
-  if (!decoded?.is_admin) {
-    return NextResponse.json({ error: "صلاحيات غير كافية" }, { status: 403 });
-  }
-
   try {
     const { name, iban, bank_name, account_holder, phone_number } = await req.json();
     if (!name) {
@@ -74,15 +55,6 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  const token = await getTokenFromCookies();
-  if (!token) {
-    return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
-  }
-  const decoded = verifyToken(token);
-  if (!decoded?.is_admin) {
-    return NextResponse.json({ error: "صلاحيات غير كافية" }, { status: 403 });
-  }
-
   try {
     const { id, name, iban, bank_name, account_holder, phone_number } = await req.json();
     if (!id || !name) {
@@ -114,15 +86,6 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const token = await getTokenFromCookies();
-  if (!token) {
-    return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
-  }
-  const decoded = verifyToken(token);
-  if (!decoded?.is_admin) {
-    return NextResponse.json({ error: "صلاحيات غير كافية" }, { status: 403 });
-  }
-
   try {
     const { id } = await req.json();
     if (!id) {
