@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
 
       delete user.password;
 
-      // ✅ بدون أي توكن، فقط نرجع بيانات المستخدم
+      // ✅ بدون أي توكن أو كوكي، فقط نرجع بيانات المستخدم
       return NextResponse.json({ success: true, user });
     } finally {
       client.release();
