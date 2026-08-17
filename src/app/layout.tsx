@@ -2,28 +2,24 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
-import Script from "next/script";
+import { ThemeProvider } from "next-themes"; 
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "فرصة العمر - منصة السحوبات الفاخرة",
-  description:
-    "اشترِ بطاقتك المرقمة وانتظر السحب العشوائي لتفوز بجوائز قيّمة. سحوبات شفافة وعادلة، جوائز مذهلة في انتظارك.",
-  keywords:
-    "سحوبات, جوائز, فرصة العمر, بطاقات رقمية, مسابقات, فوز, حظ, سحب عشوائي",
+  description: "اشترِ بطاقتك المرقمة وانتظر السحب العشوائي لتفوز بجوائز قيّمة. سحوبات شفافة وعادلة، جوائز مذهلة في انتظارك.",
+  keywords: "سحوبات, جوائز, فرصة العمر, بطاقات رقمية, مسابقات, فوز, حظ, سحب عشوائي",
   openGraph: {
     title: "فرصة العمر - منصة السحوبات الفاخرة",
     description: "انضم إلى آلاف المشتركين واربح جوائز قيمة. السحب العشوائي ينتظرك!",
-    url: "https://forsa-app-ten.vercel.app", // ⚠️ غيّر الرابط بعد شراء النطاق
+    url: "https://forsa-app-ten.vercel.app",
     siteName: "فرصة العمر",
-    images: [
-      {
-        url: "https://forsa-app-ten.vercel.app/og-image.png", // ⚠️ غيّر الرابط بعد شراء النطاق
-        width: 1200,
-        height: 630,
-        alt: "فرصة العمر - منصة السحوبات الفاخرة",
-      },
-    ],
+    images: [{
+      url: "https://forsa-app-ten.vercel.app/og-image.png",
+      width: 1200,
+      height: 630,
+      alt: "فرصة العمر - منصة السحوبات الفاخرة",
+    }],
     locale: "ar_AR",
     type: "website",
   },
@@ -61,7 +57,7 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <html lang="ar" dir="rtl">
+    <html lang="ar" dir="rtl" suppressHydrationWarning> {/* ✅ مهم جداً عشان يحل مشكلة الـ Hydration */}
       <head>
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/icon-192x192.png" />
@@ -75,7 +71,6 @@ export default async function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap"
           rel="stylesheet"
         />
-        {/* ✅ إضافة البيانات المنظمة (Structured Data) لتحسين ظهور الموقع في محركات البحث */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -83,11 +78,11 @@ export default async function RootLayout({
               "@context": "https://schema.org",
               "@type": "WebSite",
               name: "فرصة العمر",
-              url: "https://forsa-app-ten.vercel.app", // ⚠️ غيّر الرابط بعد شراء النطاق
+              url: "https://forsa-app-ten.vercel.app",
               description: "منصة السحوبات الفاخرة - اشترِ بطاقتك واربح جوائز قيمة",
               potentialAction: {
                 "@type": "SearchAction",
-                target: "https://forsa-app.com/tickets?search={search_term_string}",
+                "target": "https://forsa-app.com/tickets?search={search_term_string}",
                 "query-input": "required name=search_term_string",
               },
             }),
@@ -95,9 +90,16 @@ export default async function RootLayout({
         />
       </head>
       <body style={{ fontFamily: "'Cairo', 'Inter', sans-serif" }}>
-        <NextIntlClientProvider messages={messages}>
-          {children}
-        </NextIntlClientProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem={false}
+          storageKey="forsa-theme"
+        >
+          <NextIntlClientProvider messages={messages}>
+            {children}
+          </NextIntlClientProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
