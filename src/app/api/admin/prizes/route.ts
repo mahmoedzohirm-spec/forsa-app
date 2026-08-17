@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/db";
-import { getTokenFromCookies, verifyToken } from "@/lib/auth";
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +12,6 @@ export async function GET() {
         "SELECT id, tier, title, description, image, is_active FROM prizes ORDER BY tier ASC LIMIT 100"
       );
       
-      // ✅ إضافة Cache Headers (تخزين لمدة 60 ثانية)
       return NextResponse.json(
         { success: true, prizes: result.rows },
         {
@@ -34,16 +32,8 @@ export async function GET() {
   }
 }
 
-// ✅ POST محمي (بدون Caching)
+// ✅ POST عام (بدون تحقق)
 export async function POST(req: NextRequest) {
-  const token = await getTokenFromCookies();
-  if (!token) {
-    return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
-  }
-  const decoded = verifyToken(token);
-  if (!decoded?.is_admin) {
-    return NextResponse.json({ error: "صلاحيات غير كافية" }, { status: 403 });
-  }
   try {
     const { tier, title, description, image } = await req.json();
     const client = await pool.connect();
@@ -65,16 +55,8 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// ✅ PUT محمي (بدون Caching)
+// ✅ PUT عام (بدون تحقق)
 export async function PUT(req: NextRequest) {
-  const token = await getTokenFromCookies();
-  if (!token) {
-    return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
-  }
-  const decoded = verifyToken(token);
-  if (!decoded?.is_admin) {
-    return NextResponse.json({ error: "صلاحيات غير كافية" }, { status: 403 });
-  }
   try {
     const { id, tier, title, description, image } = await req.json();
     const client = await pool.connect();
@@ -96,16 +78,8 @@ export async function PUT(req: NextRequest) {
   }
 }
 
-// ✅ DELETE محمي (بدون Caching)
+// ✅ DELETE عام (بدون تحقق)
 export async function DELETE(req: NextRequest) {
-  const token = await getTokenFromCookies();
-  if (!token) {
-    return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
-  }
-  const decoded = verifyToken(token);
-  if (!decoded?.is_admin) {
-    return NextResponse.json({ error: "صلاحيات غير كافية" }, { status: 403 });
-  }
   try {
     const { id } = await req.json();
     const client = await pool.connect();
