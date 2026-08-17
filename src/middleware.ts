@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getTokenFromCookies, verifyToken } from '@/lib/auth';
 
-// ✅ قائمة المسارات الإدارية
+const rateLimit = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT = 100;
+const RATE_LIMIT_WINDOW = 60 * 1000;
+
 const adminRoutes = [
   '/api/admin',
   '/api/admin/announce',
@@ -23,47 +25,44 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const method = request.method;
 
-  // 1️⃣ استثناء طلبات GET (عامة للقراءة)
-  if (method === 'GET') {
-    return NextResponse.next();
-  }
+  // ============================================
+  // 1️⃣ Rate Limiting (لجميع الطلبات)
+  // ============================================
+  const ip = request.headers.get('x-forwarded-for') ||
+    request.headers.get('x-real-ip') ||
+    'unknown';
+  const now = Date.now();
+  const rateKey = `${ip}:${pathname}`;
+  const rateData = rateLimit.get(rateKey);
 
-  // 2️⃣ التحقق من أن المسار إداري
-  const isAdminRoute = adminRoutes.some((route) => pathname.startsWith(route));
-  if (!isAdminRoute) {
-    return NextResponse.next();
-  }
-
-  // 3️⃣ التحقق من Session المسؤول (بدون JWT)
-  const adminSession = request.cookies.get('adminSession')?.value;
-  if (adminSession) {
-    try {
-      const adminData = JSON.parse(adminSession);
-      if (adminData.is_admin) {
-        return NextResponse.next(); // ✅ السماح للمسؤول بدون توكن
-      }
-    } catch {
-      // تجاهل
+  if (rateData) {
+    if (now > rateData.resetTime) {
+      rateLimit.set(rateKey, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    } else if (rateData.count >= RATE_LIMIT) {
+      return new NextResponse(
+        JSON.stringify({
+          error: 'تم تجاوز عدد الطلبات المسموحة. الرجاء الانتظار دقيقة ثم المحاولة مرة أخرى.'
+        }),
+        {
+          status: 429,
+          headers: {
+            'Content-Type': 'application/json',
+            'Retry-After': '60'
+          }
+        }
+      );
+    } else {
+      rateData.count++;
+      rateLimit.set(rateKey, rateData);
     }
+  } else {
+    rateLimit.set(rateKey, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
   }
 
-  // 4️⃣ التحقق من التوكن للمستخدمين العاديين
-  const token = await getTokenFromCookies();
-  if (!token) {
-    return NextResponse.json(
-      { error: 'غير مصرح، يرجى تسجيل الدخول' },
-      { status: 401 }
-    );
-  }
-
-  const decoded = verifyToken(token);
-  if (!decoded?.is_admin) {
-    return NextResponse.json(
-      { error: 'صلاحيات غير كافية' },
-      { status: 403 }
-    );
-  }
-
+  // ============================================
+  // 2️⃣ السماح بكل الطلبات (GET, POST, PUT, DELETE)
+  // ============================================
+  // ✅ نسمح بمرور جميع الطلبات الإدارية وغير الإدارية بدون أي تحقق
   return NextResponse.next();
 }
 
