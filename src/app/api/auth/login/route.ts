@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
           path: '/',
         });
       } else {
-        // ✅ المستخدم العادي: JWT
+        // ✅ إذا كان مستخدم عادي، نضع التوكن العادي
         const token = generateToken(user);
         await setTokenCookie(token);
       }
