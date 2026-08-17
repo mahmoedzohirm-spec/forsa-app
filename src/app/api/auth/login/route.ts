@@ -57,10 +57,12 @@ export async function POST(req: NextRequest) {
           maxAge: 60 * 60 * 24 * 30,
           path: '/',
         });
+        console.log("✅ adminSession set for admin:", user.email);
       } else {
-        // ✅ إذا كان مستخدم عادي، نضع التوكن العادي
+        // ✅ إذا كان مستخدم عادي، نضع JWT
         const token = generateToken(user);
         await setTokenCookie(token);
+        console.log("✅ JWT set for user:", user.email);
       }
 
       return response;
