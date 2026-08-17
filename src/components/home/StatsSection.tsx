@@ -15,25 +15,21 @@ export function StatsSection({ counts, subscribers: _subscribers, user }: StatsS
 
   const [userCount, setUserCount] = useState(0);
 
-  // ✅ جلب عدد الأعضاء فقط إذا كان المستخدم مسؤولاً
+  // ✅ جلب عدد الأعضاء (دائماً، بدون شرط)
   useEffect(() => {
-    if (user?.is_admin) {
-      const fetchUserCount = async () => {
-        try {
-          const res = await fetch("/api/admin/users/count");
-          if (res.ok) {
-            const data = await res.json();
-            setUserCount(data.count || 0);
-          }
-        } catch (error) {
-          console.error("Error fetching user count:", error);
+    const fetchUserCount = async () => {
+      try {
+        const res = await fetch("/api/admin/users/count");
+        if (res.ok) {
+          const data = await res.json();
+          setUserCount(data.count || 0);
         }
-      };
-      fetchUserCount();
-    } else {
-      setUserCount(0);
-    }
-  }, [user]);
+      } catch (error) {
+        console.error("Error fetching user count:", error);
+      }
+    };
+    fetchUserCount();
+  }, []);
 
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat(locale).format(num);
