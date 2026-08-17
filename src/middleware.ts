@@ -5,25 +5,8 @@ const rateLimit = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT = 100;
 const RATE_LIMIT_WINDOW = 60 * 1000;
 
-const adminRoutes = [
-  '/api/admin',
-  '/api/admin/announce',
-  '/api/admin/draw',
-  '/api/admin/draw-schedule',
-  '/api/admin/payment-methods',
-  '/api/admin/prizes',
-  '/api/admin/settings',
-  '/api/admin/users',
-  '/api/admin/tickets',
-  '/api/admin/tickets/approve',
-  '/api/admin/tickets/reject',
-  '/api/admin/tickets/approve-batch',
-  '/api/admin/tickets/reject-batch',
-];
-
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-  const method = request.method;
 
   // ============================================
   // 1️⃣ Rate Limiting (لجميع الطلبات)
@@ -60,9 +43,8 @@ export async function middleware(request: NextRequest) {
   }
 
   // ============================================
-  // 2️⃣ السماح بكل الطلبات (GET, POST, PUT, DELETE)
+  // 2️⃣ السماح بكل الطلبات (بدون أي تحقق)
   // ============================================
-  // ✅ نسمح بمرور جميع الطلبات الإدارية وغير الإدارية بدون أي تحقق
   return NextResponse.next();
 }
 
