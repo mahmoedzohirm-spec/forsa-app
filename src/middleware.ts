@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { verifyToken } from '@/lib/auth'; // استيراد دالة التحقق من التوكن
 
 const rateLimit = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT = 100;
@@ -60,19 +61,59 @@ export async function middleware(request: NextRequest) {
   }
 
   // ============================================
-  // 2️⃣ السماح بكل الطلبات الإدارية بدون توكن
+  // 2️⃣ المسارات الإدارية (بدون توكن)
   // ============================================
   const isAdminRoute = adminRoutes.some((route) => pathname.startsWith(route));
-  
-  // ✅ المسؤول يدخل بدون أي توكن (نسمح لكل الطلبات على adminRoutes)
+
   if (isAdminRoute) {
-    return NextResponse.next();
+    return NextResponse.next(); // ✅ المسؤول يدخل بدون أي توكن
   }
 
   // ============================================
-  // 3️⃣ باقي الطلبات (غير الإدارية) نسمح بها أيضاً
+  // 3️⃣ التحقق من التوكن للمستخدمين العاديين
   // ============================================
-  return NextResponse.next();
+  try {
+    // محاولة استخراج التوكن من الكوكي أو من Header
+    const token =
+      request.cookies.get('token')?.value ||
+      request.headers.get('Authorization')?.replace('Bearer ', '');
+
+    if (!token) {
+      return new NextResponse(
+        JSON.stringify({ error: 'غير مصرح به. الرجاء تسجيل الدخول.' }),
+        {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // التحقق من صحة التوكن
+    const payload = await verifyToken(token);
+
+    if (!payload) {
+      return new NextResponse(
+        JSON.stringify({ error: 'توكن غير صالح أو منتهي الصلاحية.' }),
+        {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // ✅ التوكن صحيح، نسمح بالطلب
+    return NextResponse.next();
+
+  } catch (error) {
+    console.error('❌ خطأ في التحقق من التوكن:', error);
+    return new NextResponse(
+      JSON.stringify({ error: 'حدث خطأ أثناء التحقق من التوكن.' }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+  }
 }
 
 export const config = {
