@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/db";
 import bcrypt from "bcryptjs";
-import { generateToken, setTokenCookie } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   try {
@@ -46,26 +45,8 @@ export async function POST(req: NextRequest) {
 
       delete user.password;
 
-      const response = NextResponse.json({ success: true, user });
-
-      // ✅ إذا كان المستخدم مسؤولاً، نضع adminSession (بدون JWT)
-      if (user.is_admin) {
-        response.cookies.set('adminSession', JSON.stringify(user), {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax',
-          maxAge: 60 * 60 * 24 * 30,
-          path: '/',
-        });
-        console.log("✅ adminSession set for admin:", user.email);
-      } else {
-        // ✅ إذا كان مستخدم عادي، نضع JWT
-        const token = generateToken(user);
-        await setTokenCookie(token);
-        console.log("✅ JWT set for user:", user.email);
-      }
-
-      return response;
+      // ✅ بدون أي توكن أو كوكي، فقط نرجع بيانات المستخدم
+      return NextResponse.json({ success: true, user });
     } finally {
       client.release();
     }
