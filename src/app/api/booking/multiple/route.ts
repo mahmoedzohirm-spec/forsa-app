@@ -6,7 +6,6 @@ export async function POST(req: NextRequest) {
     // 1. استقبال البيانات من الواجهة
     const {
       ticketNumbers,
-      userId,
       userName,
       userPhone,
       contactPhone,
@@ -30,25 +29,28 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, error: "يجب تسجيل الدخول أولاً" },
-        { status: 401 }
-      );
-    }
-
     const client = await pool.connect();
 
     try {
-      // 3. التحقق من توفر جميع البطاقات (أن تكون حالتها 'available')
-      // نستخدم ANY($1) عشان نمرر المصفوفة كاملة
+      // 3. الحصول على أول مستخدم في قاعدة البيانات (المسؤول)
+      const userResult = await client.query(
+        "SELECT id FROM users ORDER BY id ASC LIMIT 1"
+      );
+      if (userResult.rows.length === 0) {
+        return NextResponse.json(
+          { success: false, error: "لا يوجد مستخدمين في النظام" },
+          { status: 500 }
+        );
+      }
+      const defaultUserId = userResult.rows[0].id;
+
+      // 4. التحقق من توفر جميع البطاقات
       const checkQuery = `
         SELECT number FROM tickets 
         WHERE number = ANY($1::int[]) AND status = 'available'
       `;
       const checkResult = await client.query(checkQuery, [ticketNumbers]);
 
-      // 4. إذا كان عدد البطاقات المتاحة أقل من المطلوب، نحدد الأرقام غير المتاحة
       if (checkResult.rows.length !== ticketNumbers.length) {
         const availableNumbers = checkResult.rows.map((row) => row.number);
         const notAvailable = ticketNumbers.filter(
@@ -63,16 +65,16 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // 5. إنشاء سجل جديد في جدول bookings (طلب جماعي)
+      // 5. إنشاء سجل جديد في جدول bookings
       const bookingRes = await client.query(
         `INSERT INTO bookings (user_id, contact_phone, payment_method, total_tickets, status, created_at)
          VALUES ($1, $2, $3, $4, 'pending', NOW())
          RETURNING id`,
-        [userId, contactPhone, paymentMethod, ticketNumbers.length]
+        [defaultUserId, contactPhone, paymentMethod, ticketNumbers.length]
       );
       const bookingId = bookingRes.rows[0].id;
 
-      // 6. تحديث جميع البطاقات المختارة إلى حالة 'pending' وربطها بـ booking_id
+      // 6. تحديث جميع البطاقات المختارة إلى 'pending'
       const updateQuery = `
         UPDATE tickets 
         SET status = 'pending', 
@@ -89,7 +91,7 @@ export async function POST(req: NextRequest) {
         RETURNING number
       `;
       const updateResult = await client.query(updateQuery, [
-        userId,
+        defaultUserId,
         userName || "مستخدم",
         userPhone || "",
         contactPhone,
@@ -100,9 +102,7 @@ export async function POST(req: NextRequest) {
         ticketNumbers,
       ]);
 
-      // 7. التأكد من تحديث جميع البطاقات
       if (updateResult.rows.length !== ticketNumbers.length) {
-        // لو حصل خطأ، نحذف الـ booking عشان ما يضل معلق
         await client.query(`DELETE FROM bookings WHERE id = $1`, [bookingId]);
         return NextResponse.json(
           { success: false, error: "حدث خطأ أثناء تحديث البطاقات، يرجى المحاولة مرة أخرى" },
@@ -110,7 +110,6 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // 8. إرجاع رسالة نجاح مع رقم الطلب وقائمة البطاقات
       return NextResponse.json({
         success: true,
         message: `تم حجز ${ticketNumbers.length} بطاقة بنجاح`,
@@ -118,7 +117,7 @@ export async function POST(req: NextRequest) {
         tickets: ticketNumbers,
       });
     } finally {
-      client.release(); // تحرير الاتصال بقاعدة البيانات
+      client.release();
     }
   } catch (error) {
     console.error("❌ Error in multiple booking API:", error);
