@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { verifyToken } from '@/lib/auth';
 
 const rateLimit = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT = 100;
 const RATE_LIMIT_WINDOW = 60 * 1000;
 
+// قائمة المسارات الإدارية (المسموحة بدون توكن)
 const adminRoutes = [
   '/api/admin',
   '/api/admin/announce',
@@ -23,7 +25,6 @@ const adminRoutes = [
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-  const method = request.method;
 
   // ============================================
   // 1️⃣ Rate Limiting (لجميع الطلبات)
@@ -60,9 +61,59 @@ export async function middleware(request: NextRequest) {
   }
 
   // ============================================
-  // 2️⃣ السماح بكل الطلبات (بدون أي تحقق توكن)
+  // 2️⃣ السماح للمسارات الإدارية (بدون توكن)
   // ============================================
-  return NextResponse.next();
+  const isAdminRoute = adminRoutes.some((route) => pathname.startsWith(route));
+
+  if (isAdminRoute) {
+    return NextResponse.next(); // ✅ المسؤول يدخل بدون توكن
+  }
+
+  // ============================================
+  // 3️⃣ طلب التوكن لجميع المسارات الأخرى
+  // ============================================
+  try {
+    // استخراج التوكن من الكوكي أو من Header
+    const token =
+      request.cookies.get('token')?.value ||
+      request.headers.get('Authorization')?.replace('Bearer ', '');
+
+    if (!token) {
+      return new NextResponse(
+        JSON.stringify({ error: 'غير مصرح به. الرجاء تسجيل الدخول.' }),
+        {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // التحقق من صحة التوكن
+    const payload = await verifyToken(token);
+
+    if (!payload) {
+      return new NextResponse(
+        JSON.stringify({ error: 'توكن غير صالح أو منتهي الصلاحية.' }),
+        {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // ✅ التوكن صحيح، نسمح بالطلب
+    return NextResponse.next();
+
+  } catch (error) {
+    console.error('❌ خطأ في التحقق من التوكن:', error);
+    return new NextResponse(
+      JSON.stringify({ error: 'حدث خطأ أثناء التحقق من التوكن.' }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+  }
 }
 
 export const config = {
