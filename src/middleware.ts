@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { verifyToken } from '@/lib/auth'; // ✅ استيراد دالة التحقق
 
 const rateLimit = new Map<string, { count: number; resetTime: number }>();
-const RATE_LIMIT = 100; // عدد الطلبات المسموحة
-const RATE_LIMIT_WINDOW = 60 * 1000; // دقيقة واحدة
+const RATE_LIMIT = 100;
+const RATE_LIMIT_WINDOW = 60 * 1000;
 
 // قائمة المسارات الإدارية (المسموحة بدون توكن)
 const adminRoutes = [
@@ -24,6 +25,11 @@ const adminRoutes = [
   '/api/admin/tickets/receipt',
 ];
 
+// مسارات عامة لا تحتاج توكن (مثل تسجيل الدخول)
+const publicRoutes = [
+  '/api/auth/login',
+];
+
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
@@ -39,10 +45,8 @@ export async function middleware(request: NextRequest) {
 
   if (rateData) {
     if (now > rateData.resetTime) {
-      // إعادة تعيين العداد بعد انتهاء النافذة الزمنية
       rateLimit.set(rateKey, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
     } else if (rateData.count >= RATE_LIMIT) {
-      // تجاوز الحد المسموح
       return new NextResponse(
         JSON.stringify({
           error: 'تم تجاوز عدد الطلبات المسموحة. الرجاء الانتظار دقيقة ثم المحاولة مرة أخرى.'
@@ -60,24 +64,67 @@ export async function middleware(request: NextRequest) {
       rateLimit.set(rateKey, rateData);
     }
   } else {
-    // أول طلب من هذا IP
     rateLimit.set(rateKey, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
   }
 
   // ============================================
-  // 2️⃣ السماح للمسارات الإدارية (بدون توكن)
+  // 2️⃣ المسارات العامة (لا تحتاج توكن)
+  // ============================================
+  const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
+  if (isPublicRoute) {
+    return NextResponse.next();
+  }
+
+  // ============================================
+  // 3️⃣ المسارات الإدارية (بدون توكن)
   // ============================================
   const isAdminRoute = adminRoutes.some((route) => pathname.startsWith(route));
-
   if (isAdminRoute) {
     return NextResponse.next(); // ✅ المسؤول يدخل بدون أي تحقق
   }
 
   // ============================================
-  // 3️⃣ باقي الطلبات (مثل /api/tickets/*) مسموحة حالياً
-  //    (لن نضيف توكن الآن، فقط Rate Limiting)
+  // 4️⃣ باقي الطلبات (تتطلب توكن للمستخدمين)
   // ============================================
-  return NextResponse.next();
+  try {
+    const token =
+      request.cookies.get('token')?.value ||
+      request.headers.get('Authorization')?.replace('Bearer ', '');
+
+    if (!token) {
+      return new NextResponse(
+        JSON.stringify({ error: 'غير مصرح به. الرجاء تسجيل الدخول.' }),
+        {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    const payload = await verifyToken(token);
+    if (!payload) {
+      return new NextResponse(
+        JSON.stringify({ error: 'توكن غير صالح أو منتهي الصلاحية.' }),
+        {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // ✅ التوكن صحيح، نسمح بالطلب
+    return NextResponse.next();
+
+  } catch (error) {
+    console.error('❌ خطأ في التحقق من التوكن:', error);
+    return new NextResponse(
+      JSON.stringify({ error: 'حدث خطأ أثناء التحقق من التوكن.' }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+  }
 }
 
 export const config = {
