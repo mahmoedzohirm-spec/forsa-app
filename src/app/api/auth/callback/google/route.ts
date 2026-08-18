@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/db";
+import { generateToken } from "@/lib/auth"; // ✅ استيراد دالة توليد التوكن
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
@@ -87,9 +88,25 @@ export async function GET(req: NextRequest) {
         console.log("✅ Existing user found:", userData.email);
       }
 
-      // 4. تخزين المستخدم في كوكي (الطريقة القديمة الصحيحة)
+      // ============================================
+      // 4️⃣ ✅ توليد التوكن ووضعه في كوكي httpOnly
+      // ============================================
+      const token = generateToken(userData);
       const response = NextResponse.redirect(`${process.env.NEXTAUTH_URL}/`);
 
+      // ✅ وضع التوكن في كوكي httpOnly
+      response.cookies.set({
+        name: "token",
+        value: token,
+        httpOnly: true,
+        path: "/",
+        maxAge: 60 * 60 * 24 * 7, // 7 أيام
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+      });
+
+      // ✅ أيضاً نحتفظ بكوكي user (عشان الواجهة تقرأها بسهولة)
+      // لكن نضيفها مع التوكن
       response.cookies.set({
         name: "user",
         value: JSON.stringify(userData),
@@ -100,7 +117,7 @@ export async function GET(req: NextRequest) {
         secure: process.env.NODE_ENV === "production",
       });
 
-      console.log("🍪 Cookie set for user:", userData.email);
+      console.log("✅ Token set for user:", userData.email);
       return response;
     } catch (dbError) {
       console.error("Database error during Google login:", dbError);
