@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/db";
+import { sendPushNotification } from "@/lib/firebase-admin"; 
 
 export async function POST(req: NextRequest) {
   try {
@@ -40,14 +41,13 @@ export async function POST(req: NextRequest) {
       // إرسال إشعار للمستخدم (إذا كان لديه push_token)
       if (ticket.push_token) {
         try {
-          const { sendPushNotification } = await import("@/lib/firebase-admin");
           await sendPushNotification(
             ticket.push_token,
             "✅ تم قبول طلبك",
             `تم قبول طلبك للبطاقة رقم #${ticketNumber}`
           );
         } catch (pushError) {
-          console.error("Push notification error:", pushError);
+          console.error("❌ Push notification error:", pushError);
         }
       }
 
@@ -59,7 +59,10 @@ export async function POST(req: NextRequest) {
       client.release();
     }
   } catch (error) {
-    console.error("Approve error:", error);
-    return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
+    console.error("❌ Approve error:", error);
+    return NextResponse.json(
+      { success: false, error: String(error) },
+      { status: 500 }
+    );
   }
 }
