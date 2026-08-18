@@ -21,6 +21,16 @@ const adminRoutes = [
   '/api/admin/tickets/receipt',
 ];
 
+// قائمة المسارات العامة (لا تحتاج توكن)
+const publicRoutes = [
+  '/api/auth/login',
+  '/api/auth/register',
+  '/api/auth/callback', // ← مهم جداً لتسجيل الدخول بجوجل
+  '/api/tickets', // GET فقط عام (البطاقات)
+  '/api/winners',
+  '/api/prizes',
+];
+
 // Rate Limiting
 const rateLimit = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT = 100;
@@ -28,6 +38,7 @@ const RATE_LIMIT_WINDOW = 60 * 1000;
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  const method = request.method;
 
   // ============================================
   // 1️⃣ Rate Limiting
@@ -72,9 +83,16 @@ export async function middleware(request: NextRequest) {
   }
 
   // ============================================
-  // 3️⃣ استثناء مسار تسجيل الدخول
+  // 3️⃣ السماح للمسارات العامة
   // ============================================
-  if (pathname === '/api/auth/login') {
+  const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
+  
+  // استثناء خاص: GET /api/tickets عام، لكن POST يحتاج توكن
+  if (pathname === '/api/tickets' && method === 'GET') {
+    return NextResponse.next();
+  }
+
+  if (isPublicRoute) {
     return NextResponse.next();
   }
 
