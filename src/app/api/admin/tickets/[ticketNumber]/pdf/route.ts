@@ -104,14 +104,14 @@ export async function GET(
           
           // التحقق من أن البيانات ليست فارغة
           if (!base64Data || base64Data.length < 10) {
-            throw new Error('Image data is too short or empty');
+            throw new Error('بيانات الصورة قصيرة جداً أو فارغة');
           }
           
           const imageBuffer = Buffer.from(base64Data, 'base64');
           
           // التحقق من حجم الصورة (لا تتجاوز 5 ميجابايت)
           if (imageBuffer.length > 5 * 1024 * 1024) {
-            throw new Error('Image is too large (max 5MB)');
+            throw new Error('الصورة كبيرة جداً (الحد الأقصى 5 ميجابايت)');
           }
           
           // محاولة تضمين الصورة كـ PNG
@@ -148,7 +148,7 @@ export async function GET(
               yPos -= imageHeight + 30;
             } catch (jpgError) {
               console.error('❌ Failed as JPG too:', jpgError);
-              page.drawText("⚠️ Image format not supported", {
+              page.drawText("⚠️ صيغة الصورة غير مدعومة", {
                 x: 50,
                 y: yPos - 30,
                 size: 14,
@@ -159,8 +159,10 @@ export async function GET(
             }
           }
         } catch (imageError) {
+          // ✅ ✅ ✅ التعديل النهائي: معالجة خطأ TypeScript ✅ ✅ ✅
           console.error("❌ Error processing image:", imageError);
-          page.drawText(`⚠️ ${imageError.message || 'Image not available'}`, {
+          const errorMessage = imageError instanceof Error ? imageError.message : 'الصورة غير متاحة';
+          page.drawText(`⚠️ ${errorMessage}`, {
             x: 50,
             y: yPos - 30,
             size: 14,
@@ -170,7 +172,7 @@ export async function GET(
           yPos -= 60;
         }
       } else {
-        page.drawText("📷 No receipt image attached", {
+        page.drawText("📷 لا توجد صورة إيصال مرفقة", {
           x: 50,
           y: yPos - 30,
           size: 14,
@@ -182,7 +184,7 @@ export async function GET(
 
       // ===== ملاحظات =====
       if (ticket.notes) {
-        page.drawText(`Notes: ${ticket.notes}`, {
+        page.drawText(`ملاحظات: ${ticket.notes}`, {
           x: 50,
           y: yPos - 20,
           size: 12,
@@ -192,7 +194,7 @@ export async function GET(
       }
 
       // ===== تذييل الصفحة =====
-      page.drawText(`Generated on: ${new Date().toLocaleString("en-US")}`, {
+      page.drawText(`تم الإنشاء في: ${new Date().toLocaleString("ar-SA")}`, {
         x: 50,
         y: 30,
         size: 10,
@@ -200,7 +202,7 @@ export async function GET(
         color: rgb(0.6, 0.6, 0.6),
       });
 
-      page.drawText("© Lifetime Chance - All rights reserved", {
+      page.drawText("© فرصة العمر - جميع الحقوق محفوظة", {
         x: 50,
         y: 15,
         size: 10,
