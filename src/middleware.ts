@@ -1,48 +1,16 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { verifyToken } from '@/lib/auth';
 
-// قائمة المسارات الإدارية (المسموحة بدون توكن)
-const adminRoutes = [
-  '/api/admin',
-  '/api/admin/announce',
-  '/api/admin/draw',
-  '/api/admin/draw-schedule',
-  '/api/admin/payment-methods',
-  '/api/admin/prizes',
-  '/api/admin/settings',
-  '/api/admin/users',
-  '/api/admin/tickets',
-  '/api/admin/tickets/approve',
-  '/api/admin/tickets/reject',
-  '/api/admin/tickets/approve-batch',
-  '/api/admin/tickets/reject-batch',
-  '/api/admin/tickets/reset',
-  '/api/admin/tickets/receipt',
-];
-
-// قائمة المسارات العامة (لا تحتاج توكن)
-const publicRoutes = [
-  '/api/auth/login',
-  '/api/auth/register',
-  '/api/auth/callback', // ← مهم جداً لتسجيل الدخول بجوجل
-  '/api/tickets', // GET فقط عام (البطاقات)
-  '/api/winners',
-  '/api/prizes',
-  '/api/payment-methods',
-];
-
-// Rate Limiting
+// Rate Limiting فقط
 const rateLimit = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT = 100;
 const RATE_LIMIT_WINDOW = 60 * 1000;
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-  const method = request.method;
 
   // ============================================
-  // 1️⃣ Rate Limiting
+  // 1️⃣ Rate Limiting (لجميع الطلبات)
   // ============================================
   const ip = request.headers.get('x-forwarded-for') ||
     request.headers.get('x-real-ip') ||
@@ -76,57 +44,9 @@ export async function middleware(request: NextRequest) {
   }
 
   // ============================================
-  // 2️⃣ السماح للمسارات الإدارية (بدون توكن)
+  // 2️⃣ السماح بكل الطلبات (بدون أي تحقق توكن)
   // ============================================
-  const isAdminRoute = adminRoutes.some((route) => pathname.startsWith(route));
-  if (isAdminRoute) {
-    return NextResponse.next();
-  }
-
-  // ============================================
-  // 3️⃣ السماح للمسارات العامة
-  // ============================================
-  const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
-  
-  // استثناء خاص: GET /api/tickets عام، لكن POST يحتاج توكن
-  if (pathname === '/api/tickets' && method === 'GET') {
-    return NextResponse.next();
-  }
-
-  if (isPublicRoute) {
-    return NextResponse.next();
-  }
-
-  // ============================================
-  // 4️⃣ التحقق من التوكن لباقي المسارات
-  // ============================================
-  try {
-    const token = request.cookies.get('token')?.value ||
-      request.headers.get('Authorization')?.replace('Bearer ', '');
-
-    if (!token) {
-      return new NextResponse(
-        JSON.stringify({ error: 'غير مصرح. الرجاء تسجيل الدخول.' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const payload = await verifyToken(token);
-    if (!payload) {
-      return new NextResponse(
-        JSON.stringify({ error: 'توكن غير صالح أو منتهي الصلاحية.' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    return NextResponse.next();
-  } catch (error) {
-    console.error('❌ Middleware error:', error);
-    return new NextResponse(
-      JSON.stringify({ error: 'خطأ في المصادقة.' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
-  }
+  return NextResponse.next();
 }
 
 export const config = {
