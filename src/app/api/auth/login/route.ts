@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/db";
 import bcrypt from "bcryptjs";
+import { generateToken, setTokenCookie } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   try {
@@ -45,8 +46,26 @@ export async function POST(req: NextRequest) {
 
       delete user.password;
 
-      // ✅ بدون أي توكن أو كوكي، فقط نرجع بيانات المستخدم
-      return NextResponse.json({ success: true, user });
+      // ✅ إذا كان المسؤول → ما يعطيه توكن
+      const response = NextResponse.json({ success: true, user });
+
+      if (user.is_admin) {
+        // المسؤول: نرسل بيانات فقط (بدون توكن)
+        console.log('✅ Admin login: No token generated.');
+      } else {
+        // المستخدم العادي: نولد توكن ونضعه في Cookie
+        const token = generateToken(user);
+        response.cookies.set('token', token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 60 * 60 * 24 * 7,
+          path: '/',
+        });
+        console.log('✅ User token set in cookie.');
+      }
+
+      return response;
     } finally {
       client.release();
     }
