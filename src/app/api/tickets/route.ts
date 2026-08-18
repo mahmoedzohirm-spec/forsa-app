@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
       `);
       const stats = statsResult.rows[0];
 
-      // ✅ إضافة Cache Headers (تخزين لمدة 60 ثانية)
+      // ✅ التعديل: إزالة الكاش نهائياً عشان التحديث الفوري
       return NextResponse.json(
         {
           success: true,
@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
         },
         {
           headers: {
-            'Cache-Control': 's-maxage=60, stale-while-revalidate',
+            'Cache-Control': 'no-cache, no-store, must-revalidate', // ✅ بدون كاش
           },
         }
       );
