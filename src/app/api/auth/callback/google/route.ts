@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/db";
-import { generateToken } from "@/lib/auth"; // استيراد دالة إنشاء التوكن
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
@@ -89,36 +88,22 @@ export async function GET(req: NextRequest) {
       }
 
       // ============================================================
-      // 4. ✅ إنشاء التوكن (JWT) ووضعه في الكوكي (بدلاً من كوكي user)
+      // 4. ✅ حفظ بيانات المستخدم في كوكي user (بدون توكن)
       // ============================================================
-      const token = generateToken(userData); // إنشاء التوكن
-
-      // إنشاء الرد وإعادة التوجيه
       const response = NextResponse.redirect(`${process.env.NEXTAUTH_URL}/`);
 
-      // ✅ وضع التوكن في كوكي httpOnly (للمصادقة)
+      // وضع بيانات المستخدم في كوكي عادي (غير httpOnly)
       response.cookies.set({
-        name: "token", // نفس الاسم الذي يبحث عنه الـ middleware
-        value: token,
-        httpOnly: true, // مهم للأمان
+        name: "user",
+        value: JSON.stringify(userData),
+        httpOnly: false,
         path: "/",
-        maxAge: 60 * 60 * 24 * 30, // 30 يوم
+        maxAge: 60 * 60 * 24 * 7, // 7 أيام
         sameSite: "lax",
         secure: process.env.NODE_ENV === "production",
       });
 
-      // (اختياري) يمكنك الاحتفاظ بكوكي user للواجهة إذا أردت
-      // response.cookies.set({
-      //   name: "user",
-      //   value: JSON.stringify(userData),
-      //   httpOnly: false,
-      //   path: "/",
-      //   maxAge: 60 * 60 * 24 * 7,
-      //   sameSite: "lax",
-      //   secure: process.env.NODE_ENV === "production",
-      // });
-
-      console.log("🍪 JWT Token set for user:", userData.email);
+      console.log("🍪 User data saved in cookie:", userData.email);
       return response;
 
     } catch (dbError) {
