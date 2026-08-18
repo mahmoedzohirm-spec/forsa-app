@@ -25,6 +25,8 @@ export const useUser = () => {
   const logout = useCallback(() => {
     setUser(null);
     localStorage.removeItem("forsaUser");
+    // حذف الكوكي
+    document.cookie = 'token=; Max-Age=0; path=/';
   }, []);
 
   return { user, setUser, login, logout, loading };
