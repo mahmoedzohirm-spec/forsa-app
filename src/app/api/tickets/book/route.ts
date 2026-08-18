@@ -1,11 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/db";
+import { verifyToken } from "@/lib/auth"; // استيراد دالة التحقق من التوكن
 
 export async function POST(req: NextRequest) {
   try {
+    // ============================================
+    // 1️⃣ استخراج التوكن والتحقق منه
+    // ============================================
+    const token =
+      req.cookies.get('token')?.value ||
+      req.headers.get('Authorization')?.replace('Bearer ', '');
+
+    if (!token) {
+      return NextResponse.json(
+        { success: false, error: "يجب تسجيل الدخول أولاً" },
+        { status: 401 }
+      );
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded || !decoded.id) {
+      return NextResponse.json(
+        { success: false, error: "توكن غير صالح أو منتهي الصلاحية" },
+        { status: 401 }
+      );
+    }
+
+    const userId = decoded.id; // ✅ معرف المستخدم من التوكن
+
+    // ============================================
+    // 2️⃣ استقبال البيانات من الواجهة
+    // ============================================
     const {
       ticketNumber,
-      userId,
       userName,
       userPhone,
       contactPhone,
@@ -14,6 +41,7 @@ export async function POST(req: NextRequest) {
       notes,
     } = await req.json();
 
+    // التحقق من الحقول المطلوبة
     if (!ticketNumber || !userName || !userPhone || !contactPhone || !paymentMethod || !receiptImage) {
       return NextResponse.json(
         { success: false, error: "جميع الحقول المطلوبة يجب تعبئتها" },
@@ -26,7 +54,7 @@ export async function POST(req: NextRequest) {
       // بدء المعاملة
       await client.query("BEGIN");
 
-      // استخدام FOR UPDATE لمنع التزامن
+      // التحقق من توفر البطاقة
       const ticketCheck = await client.query(
         "SELECT status FROM tickets WHERE number = $1 FOR UPDATE",
         [ticketNumber]
@@ -46,6 +74,7 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      // تحديث البطاقة مع ربطها بالمستخدم الحقيقي
       await client.query(
         `UPDATE tickets SET
           status = 'pending',
@@ -59,7 +88,7 @@ export async function POST(req: NextRequest) {
           updated_at = NOW()
         WHERE number = $8`,
         [
-          userId || null,
+          userId, // ✅ الآن userId مؤكد وصحيح
           userName,
           userPhone,
           contactPhone,
@@ -71,7 +100,16 @@ export async function POST(req: NextRequest) {
       );
 
       await client.query("COMMIT");
-      return NextResponse.json({ success: true, message: "تم حجز البطاقة بنجاح وهي قيد المراجعة" });
+      return NextResponse.json({
+        success: true,
+        message: "تم حجز البطاقة بنجاح وهي قيد المراجعة",
+        booking: {
+          ticketNumber,
+          userId,
+          userName,
+          status: "pending",
+        },
+      });
     } catch (error) {
       await client.query("ROLLBACK");
       throw error;
@@ -79,7 +117,7 @@ export async function POST(req: NextRequest) {
       client.release();
     }
   } catch (error) {
-    console.error("API /tickets/book error:", error);
+    console.error("❌ API /tickets/book error:", error);
     return NextResponse.json(
       { success: false, error: String(error) },
       { status: 500 }
