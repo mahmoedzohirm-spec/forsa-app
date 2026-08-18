@@ -41,7 +41,6 @@ export async function GET(
       const page = pdfDoc.addPage([600, 800]);
       const { width, height } = page.getSize();
 
-      // ===== إضافة النصوص (بدون رموز تعبيرية) =====
       const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
       const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
@@ -54,7 +53,6 @@ export async function GET(
         color: rgb(0.96, 0.62, 0.04),
       });
 
-      // خط فاصل
       page.drawLine({
         start: { x: 50, y: height - 70 },
         end: { x: width - 50, y: height - 70 },
@@ -91,8 +89,10 @@ export async function GET(
         yPos -= 30;
       }
 
-      // ===== إضافة صورة الإيصال =====
-      if (ticket.receipt_image) {
+      // ===== إضافة صورة الإيصال (مع تحسين التحقق) =====
+      const hasReceiptImage = ticket.receipt_image && ticket.receipt_image.trim() !== '';
+      
+      if (hasReceiptImage) {
         try {
           const base64Data = ticket.receipt_image.split(",")[1] || ticket.receipt_image;
           const imageBuffer = Buffer.from(base64Data, "base64");
@@ -110,8 +110,8 @@ export async function GET(
 
           yPos -= imageHeight + 30;
         } catch (imageError) {
-          console.error("Error embedding image:", imageError);
-          page.drawText("Image not available", {
+          console.error("❌ Error embedding image:", imageError);
+          page.drawText("⚠️ Image not available or corrupted", {
             x: 50,
             y: yPos - 30,
             size: 14,
@@ -126,7 +126,7 @@ export async function GET(
           y: yPos - 30,
           size: 14,
           font,
-          color: rgb(0.8, 0.8, 0.8),
+          color: rgb(0.6, 0.6, 0.6),
         });
         yPos -= 60;
       }
@@ -159,13 +159,9 @@ export async function GET(
         color: rgb(0.6, 0.6, 0.6),
       });
 
-      // ===== حفظ PDF =====
       const pdfBytes = await pdfDoc.save();
-
-      // ✅ تحويل Uint8Array إلى Buffer (للتوافق مع NextResponse)
       const pdfBuffer = Buffer.from(pdfBytes);
 
-      // ✅ إرجاع الملف باستخدام Buffer
       return new NextResponse(pdfBuffer, {
         status: 200,
         headers: {
@@ -177,7 +173,7 @@ export async function GET(
       client.release();
     }
   } catch (error) {
-    console.error("PDF generation error:", error);
+    console.error("❌ PDF generation error:", error);
     return NextResponse.json(
       { success: false, error: String(error) },
       { status: 500 }
