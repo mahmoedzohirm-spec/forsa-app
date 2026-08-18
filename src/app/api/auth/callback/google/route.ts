@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/db";
-import { generateToken } from "@/lib/auth"; // ✅ استيراد دالة توليد التوكن
+import { generateToken } from "@/lib/auth"; // استيراد دالة إنشاء التوكن
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
@@ -88,37 +88,39 @@ export async function GET(req: NextRequest) {
         console.log("✅ Existing user found:", userData.email);
       }
 
-      // ============================================
-      // 4️⃣ ✅ توليد التوكن ووضعه في كوكي httpOnly
-      // ============================================
-      const token = generateToken(userData);
+      // ============================================================
+      // 4. ✅ إنشاء التوكن (JWT) ووضعه في الكوكي (بدلاً من كوكي user)
+      // ============================================================
+      const token = generateToken(userData); // إنشاء التوكن
+
+      // إنشاء الرد وإعادة التوجيه
       const response = NextResponse.redirect(`${process.env.NEXTAUTH_URL}/`);
 
-      // ✅ وضع التوكن في كوكي httpOnly
+      // ✅ وضع التوكن في كوكي httpOnly (للمصادقة)
       response.cookies.set({
-        name: "token",
+        name: "token", // نفس الاسم الذي يبحث عنه الـ middleware
         value: token,
-        httpOnly: true,
+        httpOnly: true, // مهم للأمان
         path: "/",
-        maxAge: 60 * 60 * 24 * 7, // 7 أيام
+        maxAge: 60 * 60 * 24 * 30, // 30 يوم
         sameSite: "lax",
         secure: process.env.NODE_ENV === "production",
       });
 
-      // ✅ أيضاً نحتفظ بكوكي user (عشان الواجهة تقرأها بسهولة)
-      // لكن نضيفها مع التوكن
-      response.cookies.set({
-        name: "user",
-        value: JSON.stringify(userData),
-        httpOnly: false,
-        path: "/",
-        maxAge: 60 * 60 * 24 * 7,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
-      });
+      // (اختياري) يمكنك الاحتفاظ بكوكي user للواجهة إذا أردت
+      // response.cookies.set({
+      //   name: "user",
+      //   value: JSON.stringify(userData),
+      //   httpOnly: false,
+      //   path: "/",
+      //   maxAge: 60 * 60 * 24 * 7,
+      //   sameSite: "lax",
+      //   secure: process.env.NODE_ENV === "production",
+      // });
 
-      console.log("✅ Token set for user:", userData.email);
+      console.log("🍪 JWT Token set for user:", userData.email);
       return response;
+
     } catch (dbError) {
       console.error("Database error during Google login:", dbError);
       return NextResponse.redirect(
