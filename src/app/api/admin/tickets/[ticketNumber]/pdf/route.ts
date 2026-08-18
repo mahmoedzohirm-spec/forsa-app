@@ -11,7 +11,7 @@ export async function GET(
 
     if (!ticketNumber) {
       return NextResponse.json(
-        { success: false, error: "رقم البطاقة مطلوب" },
+        { success: false, error: "Ticket number is required" },
         { status: 400 }
       );
     }
@@ -29,14 +29,13 @@ export async function GET(
 
       if (result.rows.length === 0) {
         return NextResponse.json(
-          { success: false, error: "البطاقة غير موجودة" },
+          { success: false, error: "Ticket not found" },
           { status: 404 }
         );
       }
 
       const ticket = result.rows[0];
 
-      // ===== إنشاء ملف PDF =====
       const pdfDoc = await PDFDocument.create();
       const page = pdfDoc.addPage([600, 800]);
       const { width, height } = page.getSize();
@@ -44,7 +43,7 @@ export async function GET(
       const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
       const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-      // عنوان رئيسي
+      // Header
       page.drawText("Receipt - Ticket Booking", {
         x: 50,
         y: height - 50,
@@ -60,7 +59,7 @@ export async function GET(
         color: rgb(0.96, 0.62, 0.04),
       });
 
-      // ===== بيانات البطاقة =====
+      // Ticket data
       let yPos = height - 100;
       const fontSize = 14;
 
@@ -89,32 +88,28 @@ export async function GET(
         yPos -= 30;
       }
 
-      // ===== إضافة صورة الإيصال (مع تحسين التحقق) =====
+      // Receipt image handling (without emojis)
       const hasReceiptImage = ticket.receipt_image && 
                               ticket.receipt_image.trim() !== '' && 
                               ticket.receipt_image !== 'null';
 
       if (hasReceiptImage) {
         try {
-          // استخراج البيانات من Base64
           let base64Data = ticket.receipt_image;
           if (base64Data.includes(',')) {
             base64Data = base64Data.split(',')[1];
           }
           
-          // التحقق من أن البيانات ليست فارغة
           if (!base64Data || base64Data.length < 10) {
-            throw new Error('بيانات الصورة قصيرة جداً أو فارغة');
+            throw new Error('Image data is too short or empty');
           }
           
           const imageBuffer = Buffer.from(base64Data, 'base64');
           
-          // التحقق من حجم الصورة (لا تتجاوز 5 ميجابايت)
           if (imageBuffer.length > 5 * 1024 * 1024) {
-            throw new Error('الصورة كبيرة جداً (الحد الأقصى 5 ميجابايت)');
+            throw new Error('Image is too large (max 5MB)');
           }
           
-          // محاولة تضمين الصورة كـ PNG
           try {
             const image = await pdfDoc.embedPng(imageBuffer);
             const imageWidth = 400;
@@ -130,8 +125,7 @@ export async function GET(
 
             yPos -= imageHeight + 30;
           } catch (embedError) {
-            // إذا فشلت كـ PNG، حاول كـ JPG
-            console.error('❌ Failed as PNG, trying JPG...', embedError);
+            console.error('Failed as PNG, trying JPG...', embedError);
             try {
               const image = await pdfDoc.embedJpg(imageBuffer);
               const imageWidth = 400;
@@ -147,8 +141,8 @@ export async function GET(
 
               yPos -= imageHeight + 30;
             } catch (jpgError) {
-              console.error('❌ Failed as JPG too:', jpgError);
-              page.drawText("⚠️ صيغة الصورة غير مدعومة", {
+              console.error('Failed as JPG too:', jpgError);
+              page.drawText("Image format not supported", {
                 x: 50,
                 y: yPos - 30,
                 size: 14,
@@ -159,10 +153,9 @@ export async function GET(
             }
           }
         } catch (imageError) {
-          // ✅ ✅ ✅ التعديل النهائي: معالجة خطأ TypeScript ✅ ✅ ✅
-          console.error("❌ Error processing image:", imageError);
-          const errorMessage = imageError instanceof Error ? imageError.message : 'الصورة غير متاحة';
-          page.drawText(`⚠️ ${errorMessage}`, {
+          console.error("Error processing image:", imageError);
+          const errorMessage = imageError instanceof Error ? imageError.message : 'Image not available';
+          page.drawText(`Error: ${errorMessage}`, {
             x: 50,
             y: yPos - 30,
             size: 14,
@@ -172,7 +165,7 @@ export async function GET(
           yPos -= 60;
         }
       } else {
-        page.drawText("📷 لا توجد صورة إيصال مرفقة", {
+        page.drawText("No receipt image attached", {
           x: 50,
           y: yPos - 30,
           size: 14,
@@ -182,9 +175,9 @@ export async function GET(
         yPos -= 60;
       }
 
-      // ===== ملاحظات =====
+      // Notes
       if (ticket.notes) {
-        page.drawText(`ملاحظات: ${ticket.notes}`, {
+        page.drawText(`Notes: ${ticket.notes}`, {
           x: 50,
           y: yPos - 20,
           size: 12,
@@ -193,8 +186,8 @@ export async function GET(
         });
       }
 
-      // ===== تذييل الصفحة =====
-      page.drawText(`تم الإنشاء في: ${new Date().toLocaleString("ar-SA")}`, {
+      // Footer
+      page.drawText(`Generated on: ${new Date().toLocaleString("en-US")}`, {
         x: 50,
         y: 30,
         size: 10,
@@ -202,7 +195,7 @@ export async function GET(
         color: rgb(0.6, 0.6, 0.6),
       });
 
-      page.drawText("© فرصة العمر - جميع الحقوق محفوظة", {
+      page.drawText("Lifetime Chance - All rights reserved", {
         x: 50,
         y: 15,
         size: 10,
@@ -224,7 +217,7 @@ export async function GET(
       client.release();
     }
   } catch (error) {
-    console.error("❌ PDF generation error:", error);
+    console.error("PDF generation error:", error);
     return NextResponse.json(
       { success: false, error: String(error) },
       { status: 500 }
