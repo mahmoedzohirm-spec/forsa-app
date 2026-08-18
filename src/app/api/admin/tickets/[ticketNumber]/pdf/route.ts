@@ -90,28 +90,77 @@ export async function GET(
       }
 
       // ===== إضافة صورة الإيصال (مع تحسين التحقق) =====
-      const hasReceiptImage = ticket.receipt_image && ticket.receipt_image.trim() !== '';
-      
+      const hasReceiptImage = ticket.receipt_image && 
+                              ticket.receipt_image.trim() !== '' && 
+                              ticket.receipt_image !== 'null';
+
       if (hasReceiptImage) {
         try {
-          const base64Data = ticket.receipt_image.split(",")[1] || ticket.receipt_image;
-          const imageBuffer = Buffer.from(base64Data, "base64");
-          const image = await pdfDoc.embedPng(imageBuffer);
-          const imageWidth = 400;
-          const imageHeight = (image.width / imageWidth) * image.height;
+          // استخراج البيانات من Base64
+          let base64Data = ticket.receipt_image;
+          if (base64Data.includes(',')) {
+            base64Data = base64Data.split(',')[1];
+          }
+          
+          // التحقق من أن البيانات ليست فارغة
+          if (!base64Data || base64Data.length < 10) {
+            throw new Error('Image data is too short or empty');
+          }
+          
+          const imageBuffer = Buffer.from(base64Data, 'base64');
+          
+          // التحقق من حجم الصورة (لا تتجاوز 5 ميجابايت)
+          if (imageBuffer.length > 5 * 1024 * 1024) {
+            throw new Error('Image is too large (max 5MB)');
+          }
+          
+          // محاولة تضمين الصورة كـ PNG
+          try {
+            const image = await pdfDoc.embedPng(imageBuffer);
+            const imageWidth = 400;
+            const imageHeight = (image.width / imageWidth) * image.height;
 
-          yPos -= 30;
-          page.drawImage(image, {
-            x: (width - imageWidth) / 2,
-            y: yPos - imageHeight,
-            width: imageWidth,
-            height: imageHeight,
-          });
+            yPos -= 30;
+            page.drawImage(image, {
+              x: (width - imageWidth) / 2,
+              y: yPos - imageHeight,
+              width: imageWidth,
+              height: imageHeight,
+            });
 
-          yPos -= imageHeight + 30;
+            yPos -= imageHeight + 30;
+          } catch (embedError) {
+            // إذا فشلت كـ PNG، حاول كـ JPG
+            console.error('❌ Failed as PNG, trying JPG...', embedError);
+            try {
+              const image = await pdfDoc.embedJpg(imageBuffer);
+              const imageWidth = 400;
+              const imageHeight = (image.width / imageWidth) * image.height;
+
+              yPos -= 30;
+              page.drawImage(image, {
+                x: (width - imageWidth) / 2,
+                y: yPos - imageHeight,
+                width: imageWidth,
+                height: imageHeight,
+              });
+
+              yPos -= imageHeight + 30;
+            } catch (jpgError) {
+              console.error('❌ Failed as JPG too:', jpgError);
+              page.drawText("⚠️ Image format not supported", {
+                x: 50,
+                y: yPos - 30,
+                size: 14,
+                font,
+                color: rgb(1, 0, 0),
+              });
+              yPos -= 60;
+            }
+          }
         } catch (imageError) {
-          console.error("❌ Error embedding image:", imageError);
-          page.drawText("⚠️ Image not available or corrupted", {
+          console.error("❌ Error processing image:", imageError);
+          page.drawText(`⚠️ ${imageError.message || 'Image not available'}`, {
             x: 50,
             y: yPos - 30,
             size: 14,
@@ -121,7 +170,7 @@ export async function GET(
           yPos -= 60;
         }
       } else {
-        page.drawText("No receipt image attached", {
+        page.drawText("📷 No receipt image attached", {
           x: 50,
           y: yPos - 30,
           size: 14,
