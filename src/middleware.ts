@@ -29,6 +29,7 @@ const publicRoutes = [
   '/api/tickets', // GET فقط عام (البطاقات)
   '/api/winners',
   '/api/prizes',
+  '/api/payment-methods',
 ];
 
 // Rate Limiting
