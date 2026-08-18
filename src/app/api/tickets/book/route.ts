@@ -1,38 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/db";
-import { verifyToken } from "@/lib/auth"; // استيراد دالة التحقق من التوكن
 
 export async function POST(req: NextRequest) {
   try {
     // ============================================
-    // 1️⃣ استخراج التوكن والتحقق منه
-    // ============================================
-    const token =
-      req.cookies.get('token')?.value ||
-      req.headers.get('Authorization')?.replace('Bearer ', '');
-
-    if (!token) {
-      return NextResponse.json(
-        { success: false, error: "يجب تسجيل الدخول أولاً" },
-        { status: 401 }
-      );
-    }
-
-    const decoded = verifyToken(token);
-    if (!decoded || !decoded.id) {
-      return NextResponse.json(
-        { success: false, error: "توكن غير صالح أو منتهي الصلاحية" },
-        { status: 401 }
-      );
-    }
-
-    const userId = decoded.id; // ✅ معرف المستخدم من التوكن
-
-    // ============================================
-    // 2️⃣ استقبال البيانات من الواجهة
+    // 1️⃣ استقبال البيانات من الواجهة
     // ============================================
     const {
       ticketNumber,
+      userId,        // ✅ نحتاج userId من الواجهة
       userName,
       userPhone,
       contactPhone,
@@ -41,8 +17,8 @@ export async function POST(req: NextRequest) {
       notes,
     } = await req.json();
 
-    // التحقق من الحقول المطلوبة
-    if (!ticketNumber || !userName || !userPhone || !contactPhone || !paymentMethod || !receiptImage) {
+    // التحقق من الحقول المطلوبة (بما فيها userId)
+    if (!ticketNumber || !userId || !userName || !userPhone || !contactPhone || !paymentMethod || !receiptImage) {
       return NextResponse.json(
         { success: false, error: "جميع الحقول المطلوبة يجب تعبئتها" },
         { status: 400 }
@@ -74,7 +50,7 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // تحديث البطاقة مع ربطها بالمستخدم الحقيقي
+      // تحديث البطاقة مع ربطها بالمستخدم
       await client.query(
         `UPDATE tickets SET
           status = 'pending',
@@ -88,7 +64,7 @@ export async function POST(req: NextRequest) {
           updated_at = NOW()
         WHERE number = $8`,
         [
-          userId, // ✅ الآن userId مؤكد وصحيح
+          userId, // ✅ userId من الواجهة
           userName,
           userPhone,
           contactPhone,
