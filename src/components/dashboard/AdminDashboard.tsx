@@ -1085,12 +1085,36 @@ export default function AdminDashboard({
                                       const response = await fetch(`/api/admin/tickets/${first.number}/pdf`, {
                                         credentials: "include",
                                       });
+
                                       if (!response.ok) {
-                                        const error = await response.json();
-                                        alert(`❌ فشل التحميل: ${error.error || "خطأ غير معروف"}`);
+                                        let errorMsg = "خطأ غير معروف";
+                                        try {
+                                          const errorData = await response.json();
+                                          errorMsg = errorData.error || errorData.message || errorMsg;
+                                        } catch {
+                                          const text = await response.text();
+                                          if (text.includes("<html") || text.includes("<!DOCTYPE")) {
+                                            errorMsg = "الـ API رجع صفحة HTML بدل PDF";
+                                          } else {
+                                            errorMsg = text || errorMsg;
+                                          }
+                                        }
+                                        alert(`❌ فشل التحميل: ${errorMsg} (Status: ${response.status})`);
                                         return;
                                       }
+
+                                      const contentType = response.headers.get("content-type");
+                                      if (!contentType || !contentType.includes("application/pdf")) {
+                                        alert("⚠️ الـ API لم يرجع ملف PDF صالح");
+                                        return;
+                                      }
+
                                       const blob = await response.blob();
+                                      if (blob.size === 0) {
+                                        alert("⚠️ ملف PDF فارغ");
+                                        return;
+                                      }
+
                                       const url = window.URL.createObjectURL(blob);
                                       const a = document.createElement("a");
                                       a.href = url;
@@ -1100,8 +1124,8 @@ export default function AdminDashboard({
                                       a.remove();
                                       window.URL.revokeObjectURL(url);
                                     } catch (error) {
-                                      console.error(error);
-                                      alert("⚠️ حدث خطأ أثناء تحميل الـ PDF");
+                                      console.error("❌ PDF download error:", error);
+                                      alert(`⚠️ حدث خطأ أثناء تحميل الـ PDF: ${error instanceof Error ? error.message : "خطأ غير معروف"}`);
                                     }
                                   }}
                                   style={{
@@ -1279,12 +1303,36 @@ export default function AdminDashboard({
                                       const response = await fetch(`/api/admin/tickets/${t.number}/pdf`, {
                                         credentials: "include",
                                       });
+
                                       if (!response.ok) {
-                                        const error = await response.json();
-                                        alert(`❌ فشل التحميل: ${error.error || "خطأ غير معروف"}`);
+                                        let errorMsg = "خطأ غير معروف";
+                                        try {
+                                          const errorData = await response.json();
+                                          errorMsg = errorData.error || errorData.message || errorMsg;
+                                        } catch {
+                                          const text = await response.text();
+                                          if (text.includes("<html") || text.includes("<!DOCTYPE")) {
+                                            errorMsg = "الـ API رجع صفحة HTML بدل PDF";
+                                          } else {
+                                            errorMsg = text || errorMsg;
+                                          }
+                                        }
+                                        alert(`❌ فشل التحميل: ${errorMsg} (Status: ${response.status})`);
                                         return;
                                       }
+
+                                      const contentType = response.headers.get("content-type");
+                                      if (!contentType || !contentType.includes("application/pdf")) {
+                                        alert("⚠️ الـ API لم يرجع ملف PDF صالح");
+                                        return;
+                                      }
+
                                       const blob = await response.blob();
+                                      if (blob.size === 0) {
+                                        alert("⚠️ ملف PDF فارغ");
+                                        return;
+                                      }
+
                                       const url = window.URL.createObjectURL(blob);
                                       const a = document.createElement("a");
                                       a.href = url;
@@ -1294,8 +1342,8 @@ export default function AdminDashboard({
                                       a.remove();
                                       window.URL.revokeObjectURL(url);
                                     } catch (error) {
-                                      console.error(error);
-                                      alert("⚠️ حدث خطأ أثناء تحميل الـ PDF");
+                                      console.error("❌ PDF download error:", error);
+                                      alert(`⚠️ حدث خطأ أثناء تحميل الـ PDF: ${error instanceof Error ? error.message : "خطأ غير معروف"}`);
                                     }
                                   }}
                                   style={{
