@@ -48,7 +48,7 @@ export async function GET() {
 // ✅ POST (يسجل السحب مع ترتيب ثابت للأرقام المثبتة)
 export async function POST(req: NextRequest) {
   try {
-    const { prize, ticketNumber, winnerName, winnerPhone } = await req.json();
+    const { prize, rangeStart, rangeEnd, ticketNumber, winnerName, winnerPhone } = await req.json();
     
     const client = await pool.connect();
     try {
@@ -64,11 +64,11 @@ export async function POST(req: NextRequest) {
       );
       const wonNumbers = wonNumbersResult.rows.map((row: any) => row.ticket_number);
 
-      // 3️⃣ تحديد الفائز بناءً على ترتيب السحب
-      let finalTicketNumber = ticketNumber;
-      let finalWinnerName = winnerName;
-      let finalWinnerPhone = winnerPhone;
+      let finalTicketNumber: number;
+      let finalWinnerName: string;
+      let finalWinnerPhone: string;
 
+      // 3️⃣ تحديد الفائز بناءً على ترتيب السحب
       if (drawCount === 0) {
         // ✅ أول سحب → الرقم 1428 (ثابت)
         finalTicketNumber = 1428;
@@ -82,18 +82,26 @@ export async function POST(req: NextRequest) {
       } else {
         // ✅ باقي السحوبات → عشوائي من البطاقات المباعة (ولم تفز سابقاً)
         // استعلم عن البطاقات المباعة (sold) التي لم تفز من قبل
-        const availableTickets = await client.query(
-          `SELECT number, user_name, contact_phone 
-           FROM tickets 
-           WHERE status = 'sold' 
-           AND number NOT IN (SELECT DISTINCT ticket_number FROM draw_history)
-           ORDER BY RANDOM()
-           LIMIT 1`
-        );
+        let query = `
+          SELECT number, user_name, contact_phone 
+          FROM tickets 
+          WHERE status = 'sold' 
+          AND number NOT IN (SELECT DISTINCT ticket_number FROM draw_history)
+        `;
+        const params: any[] = [];
+        
+        // إذا تم إرسال النطاق، نضيف شرط BETWEEN
+        if (rangeStart && rangeEnd) {
+          query += ` AND number BETWEEN $1 AND $2`;
+          params.push(rangeStart, rangeEnd);
+        }
+        query += ` ORDER BY RANDOM() LIMIT 1`;
+
+        const availableTickets = await client.query(query, params);
 
         if (availableTickets.rows.length === 0) {
           return NextResponse.json(
-            { success: false, error: "لا توجد بطاقات مباعة متاحة للسحب (جميعها فازت سابقاً)" },
+            { success: false, error: "لا توجد بطاقات مباعة متاحة للسحب" },
             { status: 400 }
           );
         }
