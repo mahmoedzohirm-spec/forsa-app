@@ -933,12 +933,13 @@ export default function AdminDashboard({
               📊 نظرة عامة على الإحصائيات
             </h1>
             <div
+             <div
               style={{
-                display: "grid",
-                gridTemplateColumns: isMobile ? "repeat(auto-fill, minmax(140px, 1fr))" : "repeat(auto-fill, minmax(200px, 1fr))",
-                gap: "16px",
-                marginBottom: "32px",
-              }}
+              display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+                  gap: "16px",
+              marginBottom: "32px",
+            }}
             >
               {[
                 { label: "الإيرادات الكلية", value: `${revenue} ${settings.currency || "ريال"}`, icon: "💰", color: "#f59e0b" },
