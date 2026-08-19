@@ -59,22 +59,8 @@ export default function AdminDashboard({
   });
   const [isAddingWinner, setIsAddingWinner] = useState(false);
 
-  // ===== إضافة متغيرات للقائمة في الجوال =====
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-
-  // ===== التحقق من حجم الشاشة =====
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-      if (window.innerWidth >= 768) {
-        setIsMobileMenuOpen(false);
-      }
-    };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  // ===== التحكم في القائمة الجانبية (لجميع الشاشات) =====
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -732,49 +718,47 @@ export default function AdminDashboard({
         </div>
       )}
 
-      {/* ===== شريط التنقل العلوي (يظهر فقط في الموبايل) ===== */}
-      {isMobile && (
-        <div
+      {/* ===== شريط التنقل العلوي (يظهر في جميع الشاشات) ===== */}
+      <div
+        style={{
+          position: "sticky",
+          top: 0,
+          zIndex: 100,
+          background: "rgba(8, 5, 16, 0.98)",
+          backdropFilter: "blur(20px)",
+          borderBottom: "1px solid rgba(124, 58, 237, 0.2)",
+          padding: "12px 20px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <span style={{ fontSize: "20px" }}>🏆</span>
+          <span style={{ fontSize: "18px", fontWeight: "900", color: "#f59e0b" }}>
+            {settings.site_name || "فرصة العمر"}
+          </span>
+          <span style={{ fontSize: "12px", color: "#6b7280", marginRight: "4px" }}>لوحة التحكم</span>
+        </div>
+        <button
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
           style={{
-            position: "sticky",
-            top: 0,
-            zIndex: 100,
-            background: "rgba(8, 5, 16, 0.98)",
-            backdropFilter: "blur(20px)",
-            borderBottom: "1px solid rgba(124, 58, 237, 0.2)",
-            padding: "12px 20px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
+            background: "none",
+            border: "none",
+            color: "#fff",
+            fontSize: "28px",
+            cursor: "pointer",
+            padding: "4px 8px",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <span style={{ fontSize: "20px" }}>🏆</span>
-            <span style={{ fontSize: "18px", fontWeight: "900", color: "#f59e0b" }}>
-              {settings.site_name || "فرصة العمر"}
-            </span>
-            <span style={{ fontSize: "12px", color: "#6b7280", marginRight: "4px" }}>لوحة التحكم</span>
-          </div>
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            style={{
-              background: "none",
-              border: "none",
-              color: "#fff",
-              fontSize: "28px",
-              cursor: "pointer",
-              padding: "4px 8px",
-            }}
-          >
-            {isMobileMenuOpen ? "✕" : "☰"}
-          </button>
-        </div>
-      )}
+          {isSidebarOpen ? "✕" : "☰"}
+        </button>
+      </div>
 
-      {/* ===== الطبقة المظللة خلف القائمة في الموبايل ===== */}
-      {isMobile && isMobileMenuOpen && (
+      {/* ===== الطبقة المظللة خلف القائمة ===== */}
+      {isSidebarOpen && (
         <div
-          onClick={() => setIsMobileMenuOpen(false)}
+          onClick={() => setIsSidebarOpen(false)}
           style={{
             position: "fixed",
             inset: 0,
@@ -784,23 +768,22 @@ export default function AdminDashboard({
         />
       )}
 
-      {/* ===== القائمة الجانبية (مع دعم الموبايل) ===== */}
+      {/* ===== القائمة الجانبية (تظهر منزلقاً من اليمين على جميع الشاشات) ===== */}
       <div
         style={{
-          width: isMobile ? "280px" : "240px",
+          width: "280px",
           minHeight: "100vh",
           background: "rgba(15, 10, 28, 0.98)",
-          borderLeft: isMobile ? "none" : "1px solid rgba(124, 58, 237, 0.2)",
-          borderRight: isMobile ? "1px solid rgba(124, 58, 237, 0.2)" : "none",
+          borderLeft: "1px solid rgba(124, 58, 237, 0.2)",
           padding: "24px 0",
-          position: isMobile ? "fixed" : "sticky",
-          top: isMobile ? 0 : 0,
-          left: isMobile ? (isMobileMenuOpen ? "0" : "-100%") : "auto",
-          transition: "left 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
+          position: "fixed",
+          top: 0,
+          right: isSidebarOpen ? "0" : "-100%",
+          transition: "right 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
           zIndex: 9998,
           display: "flex",
           flexDirection: "column",
-          boxShadow: isMobile ? "0 0 50px rgba(0,0,0,0.8)" : "none",
+          boxShadow: "0 0 50px rgba(0,0,0,0.8)",
           overflowY: "auto",
         }}
       >
@@ -827,30 +810,28 @@ export default function AdminDashboard({
           >
             <span>👤</span> {user.name}
           </div>
-          {isMobile && (
-            <button
-              onClick={() => {
-                onLogout();
-                if (onSettingsUpdate) onSettingsUpdate();
-                setIsMobileMenuOpen(false);
-              }}
-              style={{
-                width: "100%",
-                marginTop: "12px",
-                padding: "10px",
-                background: "rgba(239, 68, 68, 0.15)",
-                border: "1px solid rgba(239, 68, 68, 0.3)",
-                borderRadius: "8px",
-                color: "#f87171",
-                fontWeight: "700",
-                cursor: "pointer",
-                fontFamily: "Cairo, Inter, sans-serif",
-                fontSize: "13px",
-              }}
-            >
-              🚪 تسجيل الخروج
-            </button>
-          )}
+          <button
+            onClick={() => {
+              onLogout();
+              if (onSettingsUpdate) onSettingsUpdate();
+              setIsSidebarOpen(false);
+            }}
+            style={{
+              width: "100%",
+              marginTop: "12px",
+              padding: "10px",
+              background: "rgba(239, 68, 68, 0.15)",
+              border: "1px solid rgba(239, 68, 68, 0.3)",
+              borderRadius: "8px",
+              color: "#f87171",
+              fontWeight: "700",
+              cursor: "pointer",
+              fontFamily: "Cairo, Inter, sans-serif",
+              fontSize: "13px",
+            }}
+          >
+            🚪 تسجيل الخروج
+          </button>
         </div>
 
         <nav style={{ flex: 1, padding: "16px 12px", overflowY: "auto" }}>
@@ -859,7 +840,7 @@ export default function AdminDashboard({
               key={t.id}
               onClick={() => {
                 setActiveTab(t.id);
-                if (isMobile) setIsMobileMenuOpen(false);
+                setIsSidebarOpen(false);
               }}
               style={{
                 width: "100%",
@@ -901,42 +882,20 @@ export default function AdminDashboard({
             </button>
           ))}
         </nav>
-
-        {!isMobile && (
-          <div style={{ padding: "16px 12px", borderTop: "1px solid rgba(124, 58, 237, 0.2)" }}>
-            <button
-              onClick={() => { onLogout(); if (onSettingsUpdate) onSettingsUpdate(); }}
-              style={{
-                width: "100%",
-                padding: "12px",
-                background: "rgba(239, 68, 68, 0.15)",
-                border: "1px solid rgba(239, 68, 68, 0.3)",
-                borderRadius: "10px",
-                color: "#f87171",
-                fontWeight: "700",
-                cursor: "pointer",
-                fontFamily: "Cairo, Inter, sans-serif",
-                fontSize: "14px",
-              }}
-            >
-              🚪 تسجيل الخروج
-            </button>
-          </div>
-        )}
       </div>
 
       {/* ===== المحتوى الرئيسي ===== */}
-      <div style={{ flex: 1, padding: "32px", overflowY: "auto" }}>
+      <div style={{ flex: 1, padding: "16px", overflowY: "auto" }}>
         {activeTab === "stats" && (
           <div>
-            <h1 style={{ fontSize: "26px", fontWeight: "900", color: "#f59e0b", marginBottom: "28px" }}>
+            <h1 style={{ fontSize: "20px", fontWeight: "900", color: "#f59e0b", marginBottom: "28px" }}>
               📊 نظرة عامة على الإحصائيات
             </h1>
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-                gap: "20px",
+                gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
+                gap: "16px",
                 marginBottom: "32px",
               }}
             >
@@ -949,9 +908,9 @@ export default function AdminDashboard({
                 { label: "إجمالي البطاقات", value: counts.total || "0", icon: "📦", color: "#ec4899" },
               ].map((item) => (
                 <div key={item.label} style={cardStyle}>
-                  <div style={{ fontSize: "28px", marginBottom: "8px" }}>{item.icon}</div>
-                  <p style={{ color: "#9ca3af", fontSize: "12px", marginBottom: "4px" }}>{item.label}</p>
-                  <p style={{ fontSize: "24px", fontWeight: "900", color: item.color }}>{item.value}</p>
+                  <div style={{ fontSize: "24px", marginBottom: "6px" }}>{item.icon}</div>
+                  <p style={{ color: "#9ca3af", fontSize: "11px", marginBottom: "4px" }}>{item.label}</p>
+                  <p style={{ fontSize: "20px", fontWeight: "900", color: item.color }}>{item.value}</p>
                 </div>
               ))}
             </div>
@@ -1045,7 +1004,7 @@ export default function AdminDashboard({
 
         {activeTab === "orders" && (
           <div>
-            <h1 style={{ fontSize: "26px", fontWeight: "900", color: "#f59e0b", marginBottom: "28px" }}>
+            <h1 style={{ fontSize: "20px", fontWeight: "900", color: "#f59e0b", marginBottom: "28px" }}>
               📋 إدارة الطلبات
             </h1>
             {loading && <div style={{ textAlign: "center", color: "#9ca3af", padding: "40px" }}>جارٍ التحميل...</div>}
@@ -1603,7 +1562,7 @@ export default function AdminDashboard({
 
         {activeTab === "members" && (
           <div>
-            <h1 style={{ fontSize: "26px", fontWeight: "900", color: "#f59e0b", marginBottom: "28px" }}>
+            <h1 style={{ fontSize: "20px", fontWeight: "900", color: "#f59e0b", marginBottom: "28px" }}>
               👥 إدارة الأعضاء
             </h1>
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -1698,10 +1657,10 @@ export default function AdminDashboard({
 
         {activeTab === "draw" && (
           <div>
-            <h1 style={{ fontSize: "26px", fontWeight: "900", color: "#f59e0b", marginBottom: "28px" }}>
+            <h1 style={{ fontSize: "20px", fontWeight: "900", color: "#f59e0b", marginBottom: "16px" }}>
               🎡 ساحة السحب المباشر
             </h1>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px", alignItems: "start" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "32px", alignItems: "start" }}>
               <div>
                 <div style={{ ...cardStyle, marginBottom: "20px" }}>
                   <label style={{ color: "#c4b5fd", fontWeight: "600", fontSize: "14px", display: "block", marginBottom: "10px" }}>
@@ -1824,8 +1783,8 @@ export default function AdminDashboard({
 
         {activeTab === "prizes" && (
           <div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "28px" }}>
-              <h1 style={{ fontSize: "26px", fontWeight: "900", color: "#f59e0b" }}>🏆 إدارة الجوائز</h1>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "28px", flexWrap: "wrap", gap: "12px" }}>
+              <h1 style={{ fontSize: "20px", fontWeight: "900", color: "#f59e0b" }}>🏆 إدارة الجوائز</h1>
               <button
                 onClick={() => setShowNewPrize(true)}
                 className="btn-gold"
@@ -1838,7 +1797,7 @@ export default function AdminDashboard({
             {showNewPrize && (
               <div style={{ ...cardStyle, marginBottom: "20px", border: "1px solid rgba(245, 158, 11, 0.4)" }}>
                 <h3 style={{ color: "#fbbf24", fontWeight: "700", marginBottom: "16px" }}>إضافة جائزة جديدة</h3>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 2fr 1fr", gap: "12px", marginBottom: "16px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px" }}>
                   <div>
                     <label style={{ color: "#9ca3af", fontSize: "12px", display: "block", marginBottom: "6px" }}>الترتيب</label>
                     <input
@@ -1921,7 +1880,7 @@ export default function AdminDashboard({
                 <div key={p.id} style={cardStyle}>
                   {editPrize?.id === p.id ? (
                     <div>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 2fr 1fr", gap: "12px", marginBottom: "16px" }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px" }}>
                         <input
                           style={inputStyle}
                           type="number"
@@ -2079,7 +2038,7 @@ export default function AdminDashboard({
 
         {activeTab === "announce" && (
           <div>
-            <h1 style={{ fontSize: "26px", fontWeight: "900", color: "#f59e0b", marginBottom: "28px" }}>
+            <h1 style={{ fontSize: "20px", fontWeight: "900", color: "#f59e0b", marginBottom: "28px" }}>
               📢 إرسال إعلان جماعي
             </h1>
             <div style={cardStyle}>
@@ -2127,7 +2086,7 @@ export default function AdminDashboard({
 
         {activeTab === "add-winner" && (
           <div>
-            <h1 style={{ fontSize: "26px", fontWeight: "900", color: "#f59e0b", marginBottom: "28px" }}>
+            <h1 style={{ fontSize: "20px", fontWeight: "900", color: "#f59e0b", marginBottom: "28px" }}>
               ➕ إضافة فائز يدوي
             </h1>
             <div style={cardStyle}>
@@ -2135,7 +2094,7 @@ export default function AdminDashboard({
                 أضف فائزاً جديداً إلى سجل السحوبات. هذا مفيد لعرض فائزين سابقين أو تجريبيين.
               </p>
               
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "16px" }}>
                 <div>
                   <label style={{ color: "#c4b5fd", fontSize: "13px", display: "block", marginBottom: "6px" }}>
                     رقم البطاقة *
@@ -2234,7 +2193,7 @@ export default function AdminDashboard({
 
         {activeTab === "settings" && (
           <div>
-            <h1 style={{ fontSize: "26px", fontWeight: "900", color: "#f59e0b", marginBottom: "28px" }}>
+            <h1 style={{ fontSize: "20px", fontWeight: "900", color: "#f59e0b", marginBottom: "28px" }}>
               ⚙️ إعدادات المنصة
             </h1>
 
@@ -2242,7 +2201,7 @@ export default function AdminDashboard({
               <h3 style={{ color: "#c4b5fd", fontWeight: "700", marginBottom: "20px", fontSize: "16px" }}>
                 🌐 إعدادات عامة
               </h3>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "16px" }}>
                 <div>
                   <label style={{ color: "#9ca3af", fontSize: "13px", display: "block", marginBottom: "6px" }}>اسم الموقع</label>
                   <input
