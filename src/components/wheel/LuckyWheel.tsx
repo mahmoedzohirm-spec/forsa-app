@@ -17,7 +17,6 @@ export default function LuckyWheel({
   const rotationRef = useRef(0);
   const animFrameRef = useRef<number | null>(null);
 
-  // 👈 عداد لتتبع أي رقم ثابت تم استخدامه
   const fixedWinnerIndex = useRef(0);
 
   const drawWheel = useCallback(
@@ -128,13 +127,11 @@ export default function LuckyWheel({
       }
     }
 
-    // إذا لم نجد الرقم الثابت أو لم يعد هناك أرقام ثابتة، اختر عشوائياً
     if (!targetTicket) {
       targetTicket = tickets[Math.floor(Math.random() * tickets.length)];
       console.log("🔄 سحب عشوائي:", targetTicket.number);
     }
 
-    // ===== حساب الزاوية =====
     const targetIndex = tickets.indexOf(targetTicket);
     const numSlices = tickets.length;
     const sliceAngle = (2 * Math.PI) / numSlices;
