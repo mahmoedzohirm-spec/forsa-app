@@ -926,20 +926,19 @@ export default function AdminDashboard({
       </div>
 
       {/* ===== المحتوى الرئيسي ===== */}
-      <div style={{ flex: 1, padding: isMobile ? "16px" : "32px", overflowY: "auto" }}>
+      <div style={{ flex: 1, padding: "32px", overflowY: "auto" }}>
         {activeTab === "stats" && (
           <div>
-            <h1 style={{ fontSize: isMobile ? "20px" : "26px", fontWeight: "900", color: "#f59e0b", marginBottom: "28px" }}>
+            <h1 style={{ fontSize: "26px", fontWeight: "900", color: "#f59e0b", marginBottom: "28px" }}>
               📊 نظرة عامة على الإحصائيات
             </h1>
             <div
-             <div
               style={{
-              display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
-                  gap: "16px",
-              marginBottom: "32px",
-            }}
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+                gap: "20px",
+                marginBottom: "32px",
+              }}
             >
               {[
                 { label: "الإيرادات الكلية", value: `${revenue} ${settings.currency || "ريال"}`, icon: "💰", color: "#f59e0b" },
@@ -950,9 +949,9 @@ export default function AdminDashboard({
                 { label: "إجمالي البطاقات", value: counts.total || "0", icon: "📦", color: "#ec4899" },
               ].map((item) => (
                 <div key={item.label} style={cardStyle}>
-                  <div style={{ fontSize: "24px", marginBottom: "6px" }}>{item.icon}</div>
-                  <p style={{ color: "#9ca3af", fontSize: "11px", marginBottom: "4px" }}>{item.label}</p>
-                  <p style={{ fontSize: "20px", fontWeight: "900", color: item.color }}>{item.value}</p>
+                  <div style={{ fontSize: "28px", marginBottom: "8px" }}>{item.icon}</div>
+                  <p style={{ color: "#9ca3af", fontSize: "12px", marginBottom: "4px" }}>{item.label}</p>
+                  <p style={{ fontSize: "24px", fontWeight: "900", color: item.color }}>{item.value}</p>
                 </div>
               ))}
             </div>
@@ -1046,7 +1045,7 @@ export default function AdminDashboard({
 
         {activeTab === "orders" && (
           <div>
-            <h1 style={{ fontSize: isMobile ? "20px" : "26px", fontWeight: "900", color: "#f59e0b", marginBottom: "28px" }}>
+            <h1 style={{ fontSize: "26px", fontWeight: "900", color: "#f59e0b", marginBottom: "28px" }}>
               📋 إدارة الطلبات
             </h1>
             {loading && <div style={{ textAlign: "center", color: "#9ca3af", padding: "40px" }}>جارٍ التحميل...</div>}
@@ -1604,7 +1603,7 @@ export default function AdminDashboard({
 
         {activeTab === "members" && (
           <div>
-            <h1 style={{ fontSize: isMobile ? "20px" : "26px", fontWeight: "900", color: "#f59e0b", marginBottom: "28px" }}>
+            <h1 style={{ fontSize: "26px", fontWeight: "900", color: "#f59e0b", marginBottom: "28px" }}>
               👥 إدارة الأعضاء
             </h1>
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -1699,10 +1698,10 @@ export default function AdminDashboard({
 
         {activeTab === "draw" && (
           <div>
-            <h1 style={{ fontSize: isMobile ? "20px" : "26px", fontWeight: "900", color: "#f59e0b", marginBottom: isMobile ? "16px" : "28px" }}>
+            <h1 style={{ fontSize: "26px", fontWeight: "900", color: "#f59e0b", marginBottom: "28px" }}>
               🎡 ساحة السحب المباشر
             </h1>
-            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "32px", alignItems: "start" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px", alignItems: "start" }}>
               <div>
                 <div style={{ ...cardStyle, marginBottom: "20px" }}>
                   <label style={{ color: "#c4b5fd", fontWeight: "600", fontSize: "14px", display: "block", marginBottom: "10px" }}>
@@ -1825,8 +1824,8 @@ export default function AdminDashboard({
 
         {activeTab === "prizes" && (
           <div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "28px", flexWrap: "wrap", gap: "12px" }}>
-              <h1 style={{ fontSize: isMobile ? "20px" : "26px", fontWeight: "900", color: "#f59e0b" }}>🏆 إدارة الجوائز</h1>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "28px" }}>
+              <h1 style={{ fontSize: "26px", fontWeight: "900", color: "#f59e0b" }}>🏆 إدارة الجوائز</h1>
               <button
                 onClick={() => setShowNewPrize(true)}
                 className="btn-gold"
@@ -1839,7 +1838,7 @@ export default function AdminDashboard({
             {showNewPrize && (
               <div style={{ ...cardStyle, marginBottom: "20px", border: "1px solid rgba(245, 158, 11, 0.4)" }}>
                 <h3 style={{ color: "#fbbf24", fontWeight: "700", marginBottom: "16px" }}>إضافة جائزة جديدة</h3>
-                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 2fr 1fr", gap: "12px", marginBottom: "16px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 2fr 1fr", gap: "12px", marginBottom: "16px" }}>
                   <div>
                     <label style={{ color: "#9ca3af", fontSize: "12px", display: "block", marginBottom: "6px" }}>الترتيب</label>
                     <input
@@ -1922,7 +1921,7 @@ export default function AdminDashboard({
                 <div key={p.id} style={cardStyle}>
                   {editPrize?.id === p.id ? (
                     <div>
-                      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 2fr 1fr", gap: "12px", marginBottom: "16px" }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 2fr 1fr", gap: "12px", marginBottom: "16px" }}>
                         <input
                           style={inputStyle}
                           type="number"
@@ -2080,7 +2079,7 @@ export default function AdminDashboard({
 
         {activeTab === "announce" && (
           <div>
-            <h1 style={{ fontSize: isMobile ? "20px" : "26px", fontWeight: "900", color: "#f59e0b", marginBottom: "28px" }}>
+            <h1 style={{ fontSize: "26px", fontWeight: "900", color: "#f59e0b", marginBottom: "28px" }}>
               📢 إرسال إعلان جماعي
             </h1>
             <div style={cardStyle}>
@@ -2128,7 +2127,7 @@ export default function AdminDashboard({
 
         {activeTab === "add-winner" && (
           <div>
-            <h1 style={{ fontSize: isMobile ? "20px" : "26px", fontWeight: "900", color: "#f59e0b", marginBottom: "28px" }}>
+            <h1 style={{ fontSize: "26px", fontWeight: "900", color: "#f59e0b", marginBottom: "28px" }}>
               ➕ إضافة فائز يدوي
             </h1>
             <div style={cardStyle}>
@@ -2136,7 +2135,7 @@ export default function AdminDashboard({
                 أضف فائزاً جديداً إلى سجل السحوبات. هذا مفيد لعرض فائزين سابقين أو تجريبيين.
               </p>
               
-              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "16px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                 <div>
                   <label style={{ color: "#c4b5fd", fontSize: "13px", display: "block", marginBottom: "6px" }}>
                     رقم البطاقة *
@@ -2235,7 +2234,7 @@ export default function AdminDashboard({
 
         {activeTab === "settings" && (
           <div>
-            <h1 style={{ fontSize: isMobile ? "20px" : "26px", fontWeight: "900", color: "#f59e0b", marginBottom: "28px" }}>
+            <h1 style={{ fontSize: "26px", fontWeight: "900", color: "#f59e0b", marginBottom: "28px" }}>
               ⚙️ إعدادات المنصة
             </h1>
 
@@ -2243,7 +2242,7 @@ export default function AdminDashboard({
               <h3 style={{ color: "#c4b5fd", fontWeight: "700", marginBottom: "20px", fontSize: "16px" }}>
                 🌐 إعدادات عامة
               </h3>
-              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "16px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                 <div>
                   <label style={{ color: "#9ca3af", fontSize: "13px", display: "block", marginBottom: "6px" }}>اسم الموقع</label>
                   <input
