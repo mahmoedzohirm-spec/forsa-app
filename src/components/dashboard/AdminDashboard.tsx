@@ -47,7 +47,6 @@ export default function AdminDashboard({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editFileInputRef = useRef<HTMLInputElement>(null);
   
-  const hasUsedFixedWinner = useRef(false);
   const [showRangeModal, setShowRangeModal] = useState(false);
   const [rangeNumbers, setRangeNumbers] = useState<number[]>([]);
   const [winningTicket, setWinningTicket] = useState<DrawTicket | null>(null);
@@ -119,16 +118,8 @@ export default function AdminDashboard({
       if (tRes.success) { setTickets(tRes.tickets); setCounts(tRes.counts); }
       if (uRes.success) setUsers(uRes.users);
       if (dRes.success) {
-        let ticketsData = dRes.tickets || [];
-        if (!ticketsData.some((t: DrawTicket) => t.number === 1428)) {
-          ticketsData.push({
-            number: 1428,
-            user_name: "مستخدم محدد",
-            contact_phone: "0599999999",
-          });
-        }
-        setDrawTickets(ticketsData);
-        setDrawHistory(dRes.history);
+        setDrawTickets(dRes.tickets || []);
+        setDrawHistory(dRes.history || []);
       }
       if (pRes.success) setPrizes(pRes.prizes);
       if (sRes.success) {
@@ -1643,36 +1634,19 @@ export default function AdminDashboard({
                           let rangeStart = selectedRange.rangeStart;
                           let rangeEnd = selectedRange.rangeEnd;
 
-                          if (!hasUsedFixedWinner.current) {
-                            realTicket = drawTickets.find((t) => t.number === 1428) || null;
-                            if (realTicket) {
-                              hasUsedFixedWinner.current = true;
-                              const foundRange = rangeTickets.find(
-                                (r) => r.rangeStart <= 1428 && r.rangeEnd >= 1428
-                              );
-                              if (foundRange) {
-                                rangeStart = foundRange.rangeStart;
-                                rangeEnd = foundRange.rangeEnd;
-                              }
-                            }
+                          const filtered = drawTickets.filter(
+                            (t) => t.number >= rangeStart && t.number <= rangeEnd
+                          );
+                          if (filtered.length === 0) {
+                            showToast(`⚠️ لا توجد بطاقات في النطاق (${rangeStart}-${rangeEnd})`);
+                            return;
                           }
-
-                          if (!realTicket) {
-                            const filtered = drawTickets.filter(
-                              (t) => t.number >= rangeStart && t.number <= rangeEnd
-                            );
-                            if (filtered.length === 0) {
-                              showToast(`⚠️ لا توجد بطاقات في النطاق (${rangeStart}-${rangeEnd})`);
-                              return;
-                            }
-                            realTicket = filtered[Math.floor(Math.random() * filtered.length)];
-                          }
+                          realTicket = filtered[Math.floor(Math.random() * filtered.length)];
 
                           if (realTicket) {
                             handleRangeWinner(realTicket, rangeStart, rangeEnd);
                           }
                         }}
-                        fixedWinnerTickets={[1428, 4261]}
                       />
                     );
                   })()
