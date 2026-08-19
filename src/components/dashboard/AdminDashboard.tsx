@@ -267,47 +267,60 @@ export default function AdminDashboard({
     }
   };
 
-  // ✅ دالة السحب الجديدة (السيرفر هو من يختار الفائز)
-  const handleSpin = async () => {
-    if (!selectedPrize) {
-      showToast("⚠️ اختر جائزة أولاً");
-      return;
-    }
-
-    setConfetti(true);
-    setTimeout(() => setConfetti(false), 4000);
+  // ✅ دالة النطاق المعدلة (تستدعي السيرفر)
+  const handleRangeWinner = async (ticket: DrawTicket, rangeStart: number, rangeEnd: number) => {
+    // 1️⃣ عرض نافذة النطاق
+    const numbers = Array.from({ length: rangeEnd - rangeStart + 1 }, (_, i) => rangeStart + i);
+    setRangeNumbers(numbers);
+    setShowRangeModal(true);
+    setWinningTicket(null); // ننتظر السيرفر
 
     try {
+      // 2️⃣ طلب الفائز من السيرفر
       const res = await fetch("/api/admin/draw", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ prize: selectedPrize }),
+        body: JSON.stringify({
+          prize: selectedPrize,
+          rangeStart,
+          rangeEnd,
+        }),
       });
       const data = await res.json();
 
       if (data.success && data.winner) {
-        setWinnerModal({
-          ticket: {
-            number: data.winner.ticketNumber,
-            user_name: data.winner.winnerName,
-            contact_phone: data.winner.winnerPhone,
-          },
-          prize: selectedPrize,
+        // 3️⃣ تعيين الفائز في النطاق
+        setWinningTicket({
+          number: data.winner.ticketNumber,
+          user_name: data.winner.winnerName,
+          contact_phone: data.winner.winnerPhone,
         });
-        loadAll();
-        showToast(`🎉 الفائز: #${data.winner.ticketNumber}`);
+
+        // 4️⃣ بعد 3 ثوانٍ، إغلاق النطاق وفتح نافذة الفائز
+        setTimeout(() => {
+          setShowRangeModal(false);
+          setWinnerModal({
+            ticket: {
+              number: data.winner.ticketNumber,
+              user_name: data.winner.winnerName,
+              contact_phone: data.winner.winnerPhone,
+            },
+            prize: selectedPrize,
+          });
+          setConfetti(true);
+          setTimeout(() => setConfetti(false), 4000);
+          loadAll();
+          showToast(`🎉 الفائز: #${data.winner.ticketNumber}`);
+        }, 3000);
       } else {
         showToast(`⚠️ ${data.error || "فشل السحب"}`);
+        setShowRangeModal(false);
       }
     } catch {
       showToast("⚠️ فشل تسجيل الفائز");
+      setShowRangeModal(false);
     }
-  };
-
-  // دالة للتوافق مع LuckyWheel (تستدعي handleSpin)
-  const handleWinner = () => {
-    handleSpin();
   };
 
   const handleAddManualWinner = async () => {
@@ -344,19 +357,6 @@ export default function AdminDashboard({
     } finally {
       setIsAddingWinner(false);
     }
-  };
-
-  // ✅ دالة Range Winner معدلة (لا تستخدم الآن لأن العجلة تعمل بـ handleSpin)
-  const handleRangeWinner = (ticket: DrawTicket, rangeStart: number, rangeEnd: number) => {
-    const numbers = Array.from({ length: rangeEnd - rangeStart + 1 }, (_, i) => rangeStart + i);
-    setRangeNumbers(numbers);
-    setWinningTicket(ticket);
-    setShowRangeModal(true);
-
-    setTimeout(() => {
-      setShowRangeModal(false);
-      handleWinner();
-    }, 3600);
   };
 
   const handleReset = async () => {
@@ -1637,9 +1637,15 @@ export default function AdminDashboard({
                     return (
                       <LuckyWheel
                         tickets={rangeTickets}
-                        onWinner={() => {
-                          handleSpin();
+                        onWinner={(selectedRange: any) => {
+                          if (!selectedPrize) {
+                            showToast("⚠️ اختر جائزة أولاً");
+                            return;
+                          }
+                          // ✅ استدعاء دالة النطاق مع النطاق المختار
+                          handleRangeWinner(selectedRange, selectedRange.rangeStart, selectedRange.rangeEnd);
                         }}
+                        fixedWinnerTickets={[1428, 4261]} // ✅ الأرقام المثبتة
                       />
                     );
                   })()
