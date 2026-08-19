@@ -248,6 +248,11 @@ export default function HomePage() {
     setSelectedTicket({ multiple: true, numbers: ticketNumbers });
   };
 
+  // ✅ حساب النسب لشريط التقدم
+  const soldCount = parseInt(counts.sold || "0");
+  const totalCount = parseInt(counts.total || "5000");
+  const soldPercentage = totalCount > 0 ? (soldCount / totalCount) * 100 : 0;
+
   if (!initialized || settingsLoading) {
     return (
       <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #0f0a1c 0%, #080510 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: "20px" }}>
@@ -472,6 +477,50 @@ export default function HomePage() {
             setActiveSection={setActiveSection}
           />
           <StatsSection counts={counts} subscribers={subscribers} user={user} />
+
+          {/* ===== شريط التقدم الأخضر (جديد) ===== */}
+          <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "0 24px" }}>
+            <div style={{ 
+              background: "rgba(30, 20, 53, 0.6)", 
+              border: "1px solid rgba(16, 185, 129, 0.2)", 
+              borderRadius: "16px", 
+              padding: "20px 24px",
+              marginTop: "20px"
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+                <span style={{ color: "#9ca3af", fontSize: "14px", fontWeight: "600" }}>📈 نسبة البطاقات المباعة</span>
+                <span style={{ color: "#34d399", fontWeight: "800", fontSize: "15px" }}>
+                  {soldPercentage.toFixed(1)}% ({soldCount} / {totalCount})
+                </span>
+              </div>
+              <div
+                style={{
+                  width: "100%",
+                  height: "12px",
+                  background: "rgba(255,255,255,0.08)",
+                  borderRadius: "20px",
+                  overflow: "hidden",
+                  boxShadow: "inset 0 2px 4px rgba(0,0,0,0.3)",
+                }}
+              >
+                <div
+                  style={{
+                    width: `${Math.min(soldPercentage, 100)}%`,
+                    height: "100%",
+                    background: "linear-gradient(90deg, #059669, #34d399, #6ee7b7)",
+                    borderRadius: "20px",
+                    transition: "width 1.8s cubic-bezier(0.4, 0, 0.2, 1)",
+                    boxShadow: "0 0 30px rgba(16, 185, 129, 0.3)",
+                  }}
+                />
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: "6px" }}>
+                <span style={{ color: "#6b7280", fontSize: "11px" }}>0%</span>
+                <span style={{ color: "#6b7280", fontSize: "11px" }}>100%</span>
+              </div>
+            </div>
+          </div>
+
           <HowItWorksSection ticketPrice={ticketPrice} />
         </>
       )}
