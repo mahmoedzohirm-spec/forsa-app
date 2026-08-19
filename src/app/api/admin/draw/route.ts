@@ -72,13 +72,13 @@ export async function POST(req: NextRequest) {
       if (drawCount === 0) {
         // ✅ أول سحب → الرقم 1428 (ثابت)
         finalTicketNumber = 1428;
-        finalWinnerName = "مستخدم محدد (1428)";
-        finalWinnerPhone = "0599999999";
+        finalWinnerName = "أمير كلاب";
+        finalWinnerPhone = "0568261920";
       } else if (drawCount === 1) {
         // ✅ ثاني سحب → الرقم 4261 (ثابت)
         finalTicketNumber = 4261;
-        finalWinnerName = "مستخدم محدد (4261)";
-        finalWinnerPhone = "0599999999";
+        finalWinnerName = "عمر قشطة";
+        finalWinnerPhone = "0595210658";
       } else {
         // ✅ باقي السحوبات → عشوائي من البطاقات المباعة (ولم تفز سابقاً)
         // استعلم عن البطاقات المباعة (sold) التي لم تفز من قبل
