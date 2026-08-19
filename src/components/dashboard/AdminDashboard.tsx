@@ -267,35 +267,47 @@ export default function AdminDashboard({
     }
   };
 
-  const handleWinner = async (ticket: DrawTicket) => {
-    setWinnerModal({ ticket, prize: selectedPrize });
+  // ✅ دالة السحب الجديدة (السيرفر هو من يختار الفائز)
+  const handleSpin = async () => {
+    if (!selectedPrize) {
+      showToast("⚠️ اختر جائزة أولاً");
+      return;
+    }
+
     setConfetti(true);
     setTimeout(() => setConfetti(false), 4000);
+
     try {
-      await fetch("/api/admin/draw", {
+      const res = await fetch("/api/admin/draw", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({
-          prize: selectedPrize,
-          ticketNumber: ticket.number,
-          winnerName: ticket.user_name,
-          winnerPhone: ticket.contact_phone,
-        }),
+        body: JSON.stringify({ prize: selectedPrize }),
       });
-      const winnerUser = users.find((u) => u.name === ticket.user_name);
-      if (winnerUser) {
-        await sendNotification(
-          winnerUser.id,
-          "🎉 مبروك! لقد فزت في السحب",
-          `لقد فزت بجائزة "${selectedPrize}" على البطاقة رقم ${ticket.number}`,
-          "winner",
-          { ticketNumber: ticket.number, prize: selectedPrize }
-        );
+      const data = await res.json();
+
+      if (data.success && data.winner) {
+        setWinnerModal({
+          ticket: {
+            number: data.winner.ticketNumber,
+            user_name: data.winner.winnerName,
+            contact_phone: data.winner.winnerPhone,
+          },
+          prize: selectedPrize,
+        });
+        loadAll();
+        showToast(`🎉 الفائز: #${data.winner.ticketNumber}`);
+      } else {
+        showToast(`⚠️ ${data.error || "فشل السحب"}`);
       }
     } catch {
       showToast("⚠️ فشل تسجيل الفائز");
     }
+  };
+
+  // دالة للتوافق مع LuckyWheel (تستدعي handleSpin)
+  const handleWinner = () => {
+    handleSpin();
   };
 
   const handleAddManualWinner = async () => {
@@ -334,6 +346,7 @@ export default function AdminDashboard({
     }
   };
 
+  // ✅ دالة Range Winner معدلة (لا تستخدم الآن لأن العجلة تعمل بـ handleSpin)
   const handleRangeWinner = (ticket: DrawTicket, rangeStart: number, rangeEnd: number) => {
     const numbers = Array.from({ length: rangeEnd - rangeStart + 1 }, (_, i) => rangeStart + i);
     setRangeNumbers(numbers);
@@ -342,7 +355,7 @@ export default function AdminDashboard({
 
     setTimeout(() => {
       setShowRangeModal(false);
-      handleWinner(ticket);
+      handleWinner();
     }, 3600);
   };
 
@@ -1624,28 +1637,8 @@ export default function AdminDashboard({
                     return (
                       <LuckyWheel
                         tickets={rangeTickets}
-                        onWinner={(selectedRange: any) => {
-                          if (!selectedPrize) {
-                            showToast("⚠️ اختر جائزة أولاً");
-                            return;
-                          }
-
-                          let realTicket: DrawTicket | null = null;
-                          let rangeStart = selectedRange.rangeStart;
-                          let rangeEnd = selectedRange.rangeEnd;
-
-                          const filtered = drawTickets.filter(
-                            (t) => t.number >= rangeStart && t.number <= rangeEnd
-                          );
-                          if (filtered.length === 0) {
-                            showToast(`⚠️ لا توجد بطاقات في النطاق (${rangeStart}-${rangeEnd})`);
-                            return;
-                          }
-                          realTicket = filtered[Math.floor(Math.random() * filtered.length)];
-
-                          if (realTicket) {
-                            handleRangeWinner(realTicket, rangeStart, rangeEnd);
-                          }
+                        onWinner={() => {
+                          handleSpin();
                         }}
                       />
                     );
