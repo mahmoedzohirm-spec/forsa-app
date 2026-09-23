@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { requestPushPermission } from "@/lib/firebase";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -13,6 +12,18 @@ const INSTALL_DISMISSED_KEY = "forsa_install_dismissed";
 const NOTIF_DISMISSED_KEY = "forsa_notif_dismissed";
 const NOTIF_GRANTED_KEY = "forsa_notif_granted";
 
+// تحويل VAPID Public Key من Base64 إلى Uint8Array (مطلوب لـ Web Push)
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
 export function usePWA() {
   const [canInstall, setCanInstall] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
@@ -20,11 +31,19 @@ export function usePWA() {
   const [showNotifModal, setShowNotifModal] = useState(false);
   const deferredPromptRef = useRef<BeforeInstallPromptEvent | null>(null);
 
-  // ========== 1. مراقبة حالة التثبيت + حدث التثبيت ==========
+  // ========== 1. تسجيل Service Worker + مراقبة التثبيت ==========
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // هل التطبيق مثبّت أصلاً؟ (standalone mode)
+    // سجل الـ SW
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register("/sw.js", { scope: "/" })
+        .then((reg) => console.log("✅ SW registered:", reg.scope))
+        .catch((err) => console.error("❌ SW registration failed:", err));
+    }
+
+    // هل التطبيق مثبّت؟
     const standalone =
       window.matchMedia("(display-mode: standalone)").matches ||
       (window.navigator as any).standalone === true;
@@ -57,7 +76,7 @@ export function usePWA() {
   const promptInstall = useCallback(async (): Promise<boolean> => {
     const prompt = deferredPromptRef.current;
     if (!prompt) {
-      console.warn("⚠️ ما في حدث تثبيت متاح (قد يكون التطبيق مثبّت أو المتصفح لا يدعم)");
+      console.warn("⚠️ ما في حدث تثبيت متاح");
       return false;
     }
     try {
@@ -73,24 +92,59 @@ export function usePWA() {
     }
   }, []);
 
-  // ========== 3. طلب الإذن + حفظ التوكن ==========
+  // ========== 3. طلب الإذن + حفظ الاشتراك (Web Push + VAPID) ==========
   const requestNotifications = useCallback(
     async (userId: number): Promise<boolean> => {
       try {
-        const token = await requestPushPermission();
-        if (!token) return false;
+        // تحقق من دعم المتصفح
+        if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+          console.warn("⚠️ المتصفح ما يدعم Push");
+          return false;
+        }
 
+        // اطلب الإذن
+        const permission = await Notification.requestPermission();
+        if (permission !== "granted") {
+          console.warn("⚠️ المستخدم رفض الإشعارات");
+          return false;
+        }
+
+        // انتظر SW يكون جاهز
+        const registration = await navigator.serviceWorker.ready;
+
+        // تحقق إذا في اشتراك موجود
+        let subscription = await registration.pushManager.getSubscription();
+
+        if (!subscription) {
+          // أنشئ اشتراك جديد
+          const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+          if (!vapidKey) {
+            console.error("❌ NEXT_PUBLIC_VAPID_PUBLIC_KEY غير موجود");
+            return false;
+          }
+
+          subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(vapidKey),
+          });
+        }
+
+        console.log("✅ Subscription endpoint:", subscription.endpoint);
+
+        // أرسل للخادم
         const res = await fetch("/api/push/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId, token }),
+          body: JSON.stringify({ userId, subscription }),
         });
 
-        if (res.ok) {
-          console.log("✅ تم حفظ التوكن في القاعدة");
-          return true;
+        if (!res.ok) {
+          console.error("❌ فشل حفظ الاشتراك");
+          return false;
         }
-        return false;
+
+        console.log("✅ تم حفظ الاشتراك في القاعدة");
+        return true;
       } catch (error) {
         console.error("❌ فشل طلب الإشعارات:", error);
         return false;
@@ -104,7 +158,7 @@ export function usePWA() {
     (userId: number) => {
       if (typeof window === "undefined") return;
 
-      // إذا الإشعارات مفعّلة مسبقاً → سجّل التوكن بشكل صامت وما تطلع نوافذ
+      // إذا الإشعارات مفعّلة مسبقاً → سجّل بهدوء بدون نوافذ
       if (
         typeof Notification !== "undefined" &&
         Notification.permission === "granted"
@@ -121,7 +175,7 @@ export function usePWA() {
         window.matchMedia("(display-mode: standalone)").matches ||
         (window.navigator as any).standalone === true;
 
-      // الخطوة 1: نافذة التثبيت (إذا ما كان مثبّت وما تم تجاهله سابقاً)
+      // الخطوة 1: نافذة التثبيت
       if (!alreadyInstalled && !installDismissed) {
         setShowInstallModal(true);
         return;
@@ -142,7 +196,7 @@ export function usePWA() {
     if (accepted) {
       localStorage.setItem(INSTALL_DISMISSED_KEY, "1");
     }
-    // بعد ما يخلص → ننتقل لنافذة الإشعارات
+    // ننتقل لنافذة الإشعارات
     if (localStorage.getItem(NOTIF_DISMISSED_KEY) !== "1") {
       setTimeout(() => setShowNotifModal(true), 400);
     }
@@ -178,12 +232,10 @@ export function usePWA() {
   }, []);
 
   return {
-    // حالة
     isInstalled,
     canInstall,
     showInstallModal,
     showNotifModal,
-    // دوال
     startFlow,
     promptInstall,
     acceptInstall,
