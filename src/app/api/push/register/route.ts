@@ -3,48 +3,60 @@ import { pool } from "@/db";
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId, token } = await req.json();
+    const { userId, subscription } = await req.json();
 
-    if (!userId || !token) {
+    if (!userId || !subscription?.endpoint || !subscription?.keys) {
       return NextResponse.json(
-        { success: false, error: "User ID and token are required" },
+        { success: false, error: "بيانات ناقصة" },
+        { status: 400 }
+      );
+    }
+
+    const { endpoint, keys } = subscription;
+    const { p256dh, auth } = keys;
+
+    if (!endpoint || !p256dh || !auth) {
+      return NextResponse.json(
+        { success: false, error: "بيانات الاشتراك ناقصة" },
         { status: 400 }
       );
     }
 
     const client = await pool.connect();
     try {
-      // أضف عمود push_token إذا لم يكن موجوداً
-      await client.query(`
-        DO $$
-        BEGIN
-          IF NOT EXISTS (
-            SELECT 1 FROM information_schema.columns 
-            WHERE table_name = 'users' AND column_name = 'push_token'
-          ) THEN
-            ALTER TABLE users ADD COLUMN push_token TEXT;
-          END IF;
-        END $$;
-      `);
-
-      // تحديث token للمستخدم
       await client.query(
-        "UPDATE users SET push_token = $1 WHERE id = $2",
-        [token, userId]
+        `INSERT INTO push_subscriptions (user_id, endpoint, p256dh_key, auth_key)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (endpoint) DO UPDATE SET
+           user_id = EXCLUDED.user_id,
+           p256dh_key = EXCLUDED.p256dh_key,
+           auth_key = EXCLUDED.auth_key,
+           updated_at = CURRENT_TIMESTAMP`,
+        [userId, endpoint, p256dh, auth]
       );
 
-      return NextResponse.json({ 
-        success: true, 
-        message: "Push token registered successfully" 
-      });
+      return NextResponse.json({ success: true, message: "تم حفظ الاشتراك" });
     } finally {
       client.release();
     }
   } catch (error) {
-    console.error("Error registering push token:", error);
+    console.error("Error registering push subscription:", error);
     return NextResponse.json(
       { success: false, error: String(error) },
       { status: 500 }
     );
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { endpoint } = await req.json();
+    if (!endpoint) {
+      return NextResponse.json({ success: false, error: "endpoint مطلوب" }, { status: 400 });
+    }
+    await pool.query("DELETE FROM push_subscriptions WHERE endpoint = $1", [endpoint]);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
   }
 }
