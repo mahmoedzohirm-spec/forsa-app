@@ -19,9 +19,10 @@ import { PrizesSection } from "@/components/home/PrizesSection";
 import { TicketsSection } from "@/components/home/TicketsSection";
 import { Footer } from "@/components/home/Footer";
 import { TrophyIcon } from "@/components/ui/Icons";
-import { requestPushPermission, onPushMessage } from "@/lib/firebase";
+import { onPushMessage } from "@/lib/firebase";
 import { DrawHistory } from "@/types";
 import { HistorySection } from "@/components/home/HistorySection";
+import PWAModals from "@/components/PWAModals";
 
 const AdminDashboard = dynamic(
   () => import("@/components/dashboard/AdminDashboard"),
@@ -182,34 +183,13 @@ export default function HomePage() {
     }
   }, [initialized]);
 
+  // ✅ الاستماع فقط للإشعارات الواردة في المقدمة (بدون طلب إذن تلقائي)
+  // طلب الإذن صار مسؤولية PWAModals
   useEffect(() => {
-    if (user) {
-      const registerPush = async () => {
-        const token = await requestPushPermission();
-        if (token) {
-          try {
-            const res = await fetch("/api/push/register", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ userId: user.id, token }),
-            });
-            if (res.ok) {
-              console.log("✅ Push token registered successfully");
-            } else {
-              console.error("❌ Failed to register push token");
-            }
-          } catch (error) {
-            console.error("❌ Error registering push token:", error);
-          }
-        }
-      };
-      registerPush();
-    }
-
     onPushMessage((payload) => {
       console.log("📨 Push message received:", payload);
     });
-  }, [user]);
+  }, []);
 
   const handleLogin = (u: any) => {
     login(u);
@@ -614,6 +594,9 @@ export default function HomePage() {
       )}
 
       <Footer settings={settings} />
+
+      {/* ✅ نوافذ PWA (تثبيت + إشعارات) */}
+      <PWAModals userId={user?.id ?? null} />
     </div>
   );
 }
